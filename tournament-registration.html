@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tournament Registration</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+:root{
+  --bg:#0A0E16; --panel:#111C2A; --panel-soft:#0E1826; --line:#22303F;
+  --chalk:#F3EFE4; --chalk-dim:#8C99A6;
+  --amber:#F2B93B; --amber-soft:rgba(242,185,59,0.14);
+  --green:#4FAE7C; --green-soft:rgba(79,174,124,0.14);
+  --red:#D9564C; --red-soft:rgba(217,86,76,0.14);
+  --turf:#143229; --turf-edge:#1E4A3C;
+  --radius:12px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:radial-gradient(1100px 500px at 50% -8%, #14243A 0%, transparent 60%), linear-gradient(180deg, var(--bg), #070B12 90%);
+  color:var(--chalk); font-family:'Inter',sans-serif; min-height:100vh;
+}
+.wrap{max-width:1040px; margin:0 auto; padding:0 16px 60px;}
+a{color:inherit;} button{font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+
+/* Topbar */
+.topbar{display:flex; align-items:center; justify-content:space-between; max-width:1040px; margin:0 auto; padding:18px 16px; border-bottom:1px solid var(--line);}
+.brand{display:flex; align-items:center; gap:12px; cursor:pointer;}
+.brand-icon{width:40px; height:40px; border-radius:8px; background:rgba(10,14,22,0.55); border:1px solid rgba(242,185,59,0.4); display:flex; align-items:center; justify-content:center; overflow:hidden;}
+.brand-icon img{width:100%; height:100%; object-fit:contain; display:block;}
+.brand-name{font-family:'Teko',sans-serif; font-weight:700; font-size:21px; text-transform:uppercase; line-height:1;}
+.brand-sub{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em; color:var(--amber); text-transform:uppercase; margin-top:3px;}
+.nav-links{display:flex; gap:20px;}
+.nav-links button{background:none; border:none; color:var(--chalk-dim); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; padding:4px 0; border-bottom:2px solid transparent;}
+.nav-links button.active{color:var(--amber); border-color:var(--amber);}
+.hamburger{display:none; background:none; border:1px solid var(--line); color:var(--chalk); font-size:16px; border-radius:6px; padding:6px 10px; cursor:pointer;}
+.mobile-nav{display:none; flex-direction:column; gap:2px; padding:0 16px 14px;}
+.mobile-nav.open{display:flex;}
+.mobile-nav button{background:var(--panel); border:1px solid var(--line); color:var(--chalk-dim); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; text-align:left; padding:11px 14px; border-radius:7px; cursor:pointer;}
+.mobile-nav button.active{color:var(--amber); border-color:var(--amber); background:var(--amber-soft);}
+@media(max-width:760px){.nav-links{display:none;} .hamburger{display:block;}}
+
+/* Hero */
+.hero{
+  margin-top:26px;
+  padding:36px 32px 30px;
+  border-radius:16px;
+  background:
+    radial-gradient(700px 280px at 90% 0%, rgba(242,185,59,0.08), transparent 55%),
+    linear-gradient(160deg,#0F2A22 0%, #0B1826 72%);
+  border:1px solid var(--turf-edge);
+  position:relative;
+  overflow:hidden;
+}
+.hero-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:28px;
+}
+.hero-copy{flex:1; min-width:0;}
+.hero-logo{
+  flex:0 0 160px;
+  width:160px;
+  height:160px;
+  border-radius:50%;
+  border:2px solid rgba(242,185,59,0.35);
+  background:rgba(10,14,22,0.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 0 0 6px rgba(242,185,59,0.06);
+}
+.hero-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+.hero-eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--amber);
+  margin-bottom:10px;
+}
+.hero h1{
+  font-family:'Teko',sans-serif;
+  font-weight:700;
+  text-transform:uppercase;
+  font-size:clamp(40px,7.5vw,62px);
+  line-height:0.92;
+  margin:0;
+}
+.hero h1 .hero-title-name{display:block;}
+.hero h1 .hero-year{
+  display:block;
+  color:var(--amber);
+  margin-top:2px;
+}
+.hero-lead{
+  color:var(--chalk-dim);
+  max-width:480px;
+  font-size:14.5px;
+  line-height:1.6;
+  margin:14px 0 0;
+}
+.hero-facts{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  margin-top:28px;
+  border-top:1px solid rgba(30,74,60,0.7);
+  border-bottom:1px solid rgba(30,74,60,0.7);
+}
+.hero-fact{
+  padding:16px 18px 16px 0;
+  border-right:1px solid rgba(34,48,63,0.9);
+}
+.hero-fact:last-child{border-right:none; padding-right:0;}
+.hero-fact:not(:first-child){padding-left:18px;}
+.hero-fact .meta-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--chalk-dim);
+  margin-bottom:8px;
+}
+.hero-fact .meta-value{
+  font-family:'Inter',sans-serif;
+  font-size:15px;
+  font-weight:600;
+  color:var(--chalk);
+  line-height:1.35;
+  word-break:break-word;
+}
+.hero-fact .meta-value.accent{color:var(--amber); font-family:'Teko',sans-serif; font-size:28px; font-weight:700; line-height:1;}
+.hero-fact .meta-value a.venue-link{
+  color:var(--chalk);
+  text-decoration:none;
+  display:inline-block;
+  transition:color .15s;
+}
+.hero-fact .meta-value a.venue-link:hover{
+  color:var(--amber);
+}
+.hero-fact .venue-hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--chalk-dim);
+  margin-top:6px;
+  transition:color .15s;
+}
+.hero-fact .meta-value a.venue-link:hover .venue-hint{color:var(--amber);}
+.hero-bottom{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:stretch;
+  gap:22px;
+  margin-top:24px;
+}
+.hero-bottom.no-deadline{grid-template-columns:1fr;}
+.hero-left{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:16px;
+  min-width:0;
+}
+.hero-actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-start;
+}
+.hero-slots{min-width:0;}
+.hero-slots-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--chalk-dim);
+  margin-bottom:8px;
+}
+.hero-slots-top strong{color:var(--amber); font-size:12px;}
+.slot-bar{height:6px; border-radius:999px; background:rgba(10,14,22,0.55); overflow:hidden; border:1px solid var(--line);}
+.slot-bar-fill{height:100%; background:linear-gradient(90deg, var(--amber), var(--green)); border-radius:999px; transition:width .3s;}
+.hero-slots-status{margin-top:7px; font-size:12px; color:var(--chalk-dim);}
+.hero-slots-status.closed,
+.hero-slots-status.full{color:var(--red);}
+
+/* Registration deadline */
+.reg-deadline{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:16px;
+  min-width:0;
+  padding:18px 20px;
+  border:1px solid rgba(242,185,59,0.28);
+  border-radius:12px;
+  background:
+    linear-gradient(105deg, rgba(242,185,59,0.09) 0%, rgba(14,24,38,0.55) 42%, rgba(14,24,38,0.35) 100%);
+}
+.reg-deadline.closed{
+  border-color:rgba(217,86,76,0.35);
+  background:linear-gradient(105deg, rgba(217,86,76,0.1) 0%, rgba(14,24,38,0.55) 45%, rgba(14,24,38,0.35) 100%);
+}
+.reg-deadline-copy{min-width:0;}
+.reg-deadline-kicker{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--amber);
+  margin-bottom:6px;
+}
+.reg-deadline.closed .reg-deadline-kicker{color:var(--red);}
+.reg-deadline-title{
+  font-family:'Inter',sans-serif;
+  font-size:15px;
+  font-weight:600;
+  color:var(--chalk);
+  line-height:1.3;
+}
+.reg-deadline-sub{
+  margin-top:4px;
+  font-size:12.5px;
+  color:var(--chalk-dim);
+  line-height:1.4;
+}
+.reg-deadline-count{
+  display:flex;
+  gap:8px;
+  width:100%;
+}
+.reg-deadline-unit{
+  flex:1;
+  min-width:0;
+  text-align:center;
+  padding:8px 6px 7px;
+  background:rgba(10,14,22,0.5);
+  border:1px solid rgba(242,185,59,0.28);
+  border-radius:8px;
+}
+.reg-deadline.closed .reg-deadline-unit{border-color:rgba(217,86,76,0.28);}
+.reg-deadline-unit .n{
+  font-family:'Teko',sans-serif;
+  font-weight:700;
+  font-size:26px;
+  line-height:1;
+  color:var(--amber);
+  font-variant-numeric:tabular-nums;
+}
+.reg-deadline.closed .reg-deadline-unit .n{color:var(--red);}
+.reg-deadline-unit .l{
+  display:block;
+  margin-top:3px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:8px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--chalk-dim);
+}
+@media(max-width:760px){
+  .hero{padding:28px 20px 24px;}
+  .hero-top{flex-direction:column-reverse; align-items:center; text-align:center;}
+  .hero-copy{width:100%;}
+  .hero-lead{margin-left:auto; margin-right:auto;}
+  .hero-logo{flex-basis:120px; width:120px; height:120px;}
+  .hero-facts{grid-template-columns:1fr 1fr;}
+  .hero-fact{padding:14px 12px 14px 0;}
+  .hero-fact:nth-child(2n){border-right:none; padding-right:0;}
+  .hero-fact:nth-child(n+3){border-top:1px solid rgba(34,48,63,0.85);}
+  .hero-fact:not(:first-child){padding-left:12px;}
+  .hero-fact:nth-child(2n+1){padding-left:0;}
+  .hero-bottom{grid-template-columns:1fr;}
+  .hero-actions{justify-content:center;}
+  .reg-deadline-count{justify-content:stretch;}
+  .reg-deadline-unit{flex:1; min-width:0;}
+}
+@media(max-width:420px){
+  .hero-facts{grid-template-columns:1fr;}
+  .hero-fact{border-right:none !important; padding:14px 0 !important;}
+  .hero-fact:not(:first-child){border-top:1px solid rgba(34,48,63,0.85);}
+}
+
+.btn{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; padding:12px 22px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:transparent; color:var(--chalk);}
+.btn-primary{background:var(--amber); color:#241A03; border-color:var(--amber); font-weight:700;}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-outline:hover{border-color:var(--chalk-dim);}
+.btn-danger{background:var(--red-soft); border-color:var(--red); color:var(--red);}
+.btn-green{background:var(--green-soft); border-color:var(--green); color:var(--green);}
+.btn:disabled{opacity:0.4; cursor:not-allowed;}
+.btn.small{padding:7px 12px; font-size:10.5px;}
+
+/* Slot meter (legacy class kept for safety) */
+.slot-meter{margin-top:22px; background:var(--panel-soft); border:1px solid var(--line); border-radius:12px; padding:14px 16px;}
+.slot-meter-top{display:flex; justify-content:space-between; align-items:baseline; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--chalk-dim); margin-bottom:8px;}
+.slot-meter-top strong{color:var(--amber); font-size:13px;}
+.slot-status{margin-top:8px; font-size:12px; color:var(--chalk-dim);}
+.slot-status.closed{color:var(--red);}
+.slot-status.full{color:var(--red);}
+
+/* stat grid */
+.grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+@media(max-width:760px){.grid-4{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px;}
+.stat-label{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--chalk-dim);}
+.stat-value{font-family:'Teko',sans-serif; font-weight:700; font-size:32px; margin:6px 0 2px; line-height:1;}
+.stat-value.amber{color:var(--amber);} .stat-value.green{color:var(--green);} .stat-value.red{color:var(--red);}
+
+.section-label{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--chalk-dim); margin:30px 2px 12px;}
+.page-title{font-family:'Teko',sans-serif; font-weight:700; font-size:32px; text-transform:uppercase; margin:28px 0 4px;}
+.page-title.section-break{margin-top:40px;}
+.page-sub{color:var(--chalk-dim); font-size:13px; margin-bottom:20px;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:18px;}
+.card h2{font-family:'Teko',sans-serif; font-size:20px; letter-spacing:0.03em; text-transform:uppercase; margin:0 0 14px; color:var(--amber); font-weight:600;}
+
+/* form */
+.field{margin-bottom:16px;}
+.field label{display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--chalk-dim); margin-bottom:7px;}
+.field input[type=text], .field input[type=tel], .field input[type=email], .field input[type=password], .field input[type=number], .field input[type=date], .field input[type=time], .field select{
+  width:100%; background:var(--panel-soft); border:1px solid var(--line); color:var(--chalk); border-radius:8px; padding:11px 13px; font-size:14px;
+}
+.field select{cursor:pointer; appearance:auto;}
+.field input[type=date]::-webkit-calendar-picker-indicator,
+.field input[type=time]::-webkit-calendar-picker-indicator{filter:invert(0.8); cursor:pointer;}
+.field input:focus, .field select:focus{outline:none; border-color:var(--amber);}
+.field .hint{font-size:11px; color:var(--chalk-dim); margin-top:6px; line-height:1.4;}
+.pay-toggle{display:flex; gap:10px;}
+.pay-opt{flex:1; text-align:center; padding:12px 10px; border:1px solid var(--line); border-radius:8px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--chalk-dim);}
+.pay-opt.active{border-color:var(--amber); background:var(--amber-soft); color:var(--amber);}
+.role-toggle{display:flex; gap:10px; margin-top:4px;}
+.role-opt{flex:1; text-align:center; padding:12px 10px; border:1px solid var(--line); border-radius:8px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--chalk-dim);}
+.role-opt.active{border-color:var(--amber); background:var(--amber-soft); color:var(--amber);}
+.role-opt.disabled{cursor:not-allowed; opacity:0.45; pointer-events:none;}
+.role-opt .role-fee{display:block; margin-top:6px; font-size:10px; letter-spacing:0.04em; opacity:0.85;}
+.photo-drop{border:1.5px dashed var(--line); border-radius:10px; padding:18px; text-align:center; cursor:pointer; background:var(--panel-soft);}
+.photo-drop:hover{border-color:var(--amber);}
+.photo-preview{width:84px; height:96px; border-radius:10px; object-fit:cover; margin:0 auto 8px; display:block; border:2px solid var(--turf-edge);}
+.photo-hint{font-size:12px; color:var(--chalk-dim); margin-top:8px; line-height:1.45;}
+
+/* Face crop modal */
+.crop-modal .modal-card{max-width:440px;}
+.crop-hint{font-size:13px; color:var(--chalk-dim); margin:-6px 0 14px; line-height:1.45;}
+.crop-viewport{
+  position:relative;
+  width:min(100%, 280px);
+  aspect-ratio:7 / 8;
+  margin:0 auto;
+  border-radius:12px;
+  overflow:hidden;
+  background:#070B12;
+  border:1px solid var(--line);
+  touch-action:none;
+  cursor:grab;
+  user-select:none;
+}
+.crop-viewport.dragging{cursor:grabbing;}
+.crop-stage{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+}
+.crop-stage img{
+  position:absolute;
+  max-width:none;
+  max-height:none;
+  pointer-events:none;
+  will-change:left, top, width, height;
+}
+.crop-face-guide{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.crop-face-frame{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:82%;
+  height:88%;
+  transform:translate(-50%,-50%);
+  border-radius:18px;
+  box-shadow:0 0 0 9999px rgba(7,11,18,0.62);
+  border:2px solid rgba(242,185,59,0.9);
+}
+.crop-face-label{
+  position:absolute;
+  left:50%;
+  bottom:10%;
+  transform:translateX(-50%);
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--amber);
+  text-shadow:0 1px 4px rgba(0,0,0,0.8);
+  white-space:nowrap;
+}
+.crop-controls{margin-top:14px;}
+.crop-zoom-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:4px;
+}
+.crop-zoom-row label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--chalk-dim);
+  min-width:42px;
+}
+.crop-zoom-row input[type="range"]{
+  flex:1;
+  accent-color:var(--amber);
+}
+.crop-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px; flex-wrap:wrap;}
+.qr-box{text-align:center; padding:16px; background:var(--panel-soft); border:1px solid var(--line); border-radius:10px; margin:10px 0 4px;}
+.qr-box img{max-width:180px; width:100%; border-radius:8px; background:#fff; padding:8px;}
+.qr-box .qr-hint{font-size:11.5px; color:var(--chalk-dim); margin-top:8px;}
+.qr-box .qr-missing{font-size:13px; color:var(--chalk-dim); margin:0; line-height:1.5;}
+.qr-admin-card{display:flex; flex-direction:column; gap:10px; padding:14px; background:var(--panel-soft); border:1px solid var(--line); border-radius:10px;}
+.qr-admin-actions{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+.qr-admin-status{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--chalk-dim);}
+.qr-admin-status.ok{color:var(--green);}
+.qr-admin-status.warn{color:var(--amber);}
+.form-msg{padding:12px 14px; border-radius:8px; font-size:13px; margin-bottom:14px;}
+.form-msg.err{background:var(--red-soft); border:1px solid var(--red); color:#F7B5AF;}
+.form-msg.ok{background:var(--green-soft); border:1px solid var(--green); color:#B7E6CB;}
+.confirm-box{text-align:center; padding:32px 20px;}
+.confirm-box .ico{width:56px; height:56px; border-radius:50%; background:var(--green-soft); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 16px;}
+.confirm-box h2{font-family:'Teko',sans-serif; font-size:28px; text-transform:uppercase; margin:0 0 8px; color:var(--chalk);}
+.confirm-box p{color:var(--chalk-dim); font-size:14px; line-height:1.6; max-width:380px; margin:0 auto;}
+
+/* public player list table */
+.plist-wrap{overflow-x:auto; margin-top:4px;}
+.plist{width:100%; border-collapse:collapse; font-size:13px; min-width:520px;}
+.plist th{
+  font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.1em;
+  color:var(--chalk-dim); text-transform:uppercase; text-align:left;
+  padding:10px 10px 12px; border-bottom:1px solid var(--line); white-space:nowrap;
+}
+.plist td{padding:12px 10px; border-bottom:1px solid rgba(34,48,63,0.55); vertical-align:middle;}
+.plist tr:last-child td{border-bottom:none;}
+.plist .col-serial{font-family:'Teko',sans-serif; font-weight:700; font-size:22px; color:var(--amber); width:56px;}
+.plist.confirmed-list .col-serial{color:var(--green);}
+.plist .col-photo{width:56px;}
+.plist .col-photo img,
+.plist .col-photo .plist-avatar{
+  width:40px; height:48px; border-radius:8px; object-fit:cover;
+  border:1px solid var(--turf-edge); display:block;
+}
+.plist .col-photo .plist-avatar{
+  display:flex; align-items:center; justify-content:center;
+  background:var(--turf); font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--chalk);
+}
+.plist .col-name{font-family:'Teko',sans-serif; font-weight:600; font-size:18px; text-transform:uppercase; letter-spacing:0.02em; line-height:1.1;}
+.plist .col-position{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--amber); text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap;}
+.plist .col-phone{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--chalk-dim); white-space:nowrap;}
+.plist .col-status{white-space:nowrap;}
+
+/* admin */
+.login-shell{max-width:360px; margin:60px auto; padding:28px; background:var(--panel); border:1px solid var(--line); border-radius:16px;}
+.login-shell h2{font-family:'Teko',sans-serif; font-size:26px; text-transform:uppercase; margin:0 0 18px; text-align:center;}
+.admin-tabs{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
+.admin-tab{background:var(--panel); border:1px solid var(--line); color:var(--chalk-dim); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; padding:9px 16px; border-radius:999px; cursor:pointer;}
+.admin-tab.active{background:var(--amber-soft); border-color:var(--amber); color:var(--amber);}
+.toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;}
+.toolbar input[type=text]{flex:1; min-width:160px; background:var(--panel-soft); border:1px solid var(--line); color:var(--chalk); border-radius:8px; padding:9px 12px; font-size:13px;}
+.toolbar select{background:var(--panel-soft); border:1px solid var(--line); color:var(--chalk); border-radius:8px; padding:9px 12px; font-size:12px; font-family:'JetBrains Mono',monospace; text-transform:uppercase;}
+.export-row{display:flex; gap:8px; flex-wrap:wrap;}
+
+.ptable{width:100%; border-collapse:collapse; font-size:12.5px;}
+.ptable th{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.06em; color:var(--chalk-dim); text-transform:uppercase; text-align:left; padding:8px 8px; border-bottom:1px solid var(--line); white-space:nowrap;}
+.ptable td{padding:9px 8px; border-bottom:1px solid rgba(34,48,63,0.6); vertical-align:middle;}
+.ptable img.thumb{width:36px; height:42px; border-radius:8px; object-fit:cover; border:1px solid var(--turf-edge);}
+.pill{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; padding:3px 8px; border-radius:999px; display:inline-block;}
+.pill.pending{background:var(--amber-soft); color:var(--amber);}
+.pill.confirmed{background:var(--green-soft); color:var(--green);}
+.pill.rejected{background:var(--red-soft); color:var(--red);}
+.row-actions{display:flex; gap:6px; flex-wrap:wrap;}
+.table-scroll{overflow-x:auto;}
+.settings-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 16px;}
+@media(max-width:600px){.settings-grid{grid-template-columns:1fr;}}
+.toggle-row{display:flex; align-items:center; justify-content:space-between; background:var(--panel-soft); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:16px;}
+.toggle-row div{font-size:13px; font-weight:600;}
+.toggle-row .sub{font-size:11px; color:var(--chalk-dim); font-weight:400; margin-top:2px;}
+.switch{width:44px; height:24px; border-radius:999px; background:var(--line); position:relative; cursor:pointer; flex-shrink:0; border:none;}
+.switch.on{background:var(--green);}
+.switch::after{content:""; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; transition:.2s;}
+.switch.on::after{left:22px;}
+.qr-admin-preview{width:100px; border-radius:8px; background:#fff; padding:6px; margin-bottom:10px; display:block;}
+.logo-admin-preview{width:100px; height:100px; object-fit:cover; border-radius:50%; background:var(--panel-soft); border:1px solid var(--line); margin-bottom:10px; display:block;}
+
+/* modal */
+.modal-backdrop{position:fixed; inset:0; background:rgba(7,11,18,0.78); backdrop-filter:blur(6px); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px;}
+.modal-card{width:100%; max-width:420px; max-height:88vh; overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px;}
+.modal-card h2{font-family:'Teko',sans-serif; font-size:24px; text-transform:uppercase; margin:0 0 16px;}
+.modal-foot{display:flex; justify-content:flex-end; gap:8px; margin-top:6px;}
+
+.fb-status{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--chalk-dim);}
+.fb-status.ok{color:var(--green);} .fb-status.err{color:var(--red);} .fb-status.wait{color:var(--amber);}
+footer{display:flex; align-items:center; justify-content:space-between; padding:22px 4px 10px; border-top:1px solid var(--line); margin-top:36px; flex-wrap:wrap; gap:10px;}
+.foot-text{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; color:var(--chalk-dim); text-transform:uppercase;}
+.empty{padding:20px; text-align:center; color:var(--chalk-dim); font-size:13px;}
+.spinner{width:16px; height:16px; border-radius:50%; border:2px solid rgba(242,185,59,0.3); border-top-color:var(--amber); animation:spin .7s linear infinite; display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand" onclick="navigate('home')">
+    <div class="brand-icon"><img src="titans-super-cup-logo.png" alt="Titans Super Cup"></div>
+    <div>
+      <div class="brand-name" id="brandName">Tournament Registration</div>
+      <div class="brand-sub">PLAYER SIGN-UP DESK</div>
+    </div>
+  </div>
+  <div class="nav-links" id="navLinks"></div>
+  <button class="hamburger" id="hamburgerBtn">☰</button>
+</div>
+<div class="mobile-nav" id="mobileNav"></div>
+
+<div class="wrap">
+  <main id="app"></main>
+  <footer>
+    <div>
+      <div class="foot-text" id="footText">© Tournament Registration</div>
+      <div class="fb-status wait" id="fbStatus">Connecting to Firebase…</div>
+    </div>
+    <a class="btn small" id="auctionDeskLink" href="tournament-auction.html">Auction Desk →</a>
+  </footer>
+</div>
+<div id="photoCropRoot"></div>
+
+<script>
+/* ============================================================
+   FIREBASE CONFIG — paste from Firebase Console → Project settings → Your apps
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyB79Gf7ygpXTzHURxOHnxA5uUs17jaHagQ",
+  authDomain: "footballtournament-22b07.firebaseapp.com",
+  projectId: "footballtournament-22b07",
+  storageBucket: "footballtournament-22b07.firebasestorage.app",
+  messagingSenderId: "828377364621",
+  appId: "1:828377364621:web:17aa8edcf9179d95b10ac4"
+};
+
+const SETTINGS_PATH = { collection:'config', id:'tournament' };
+const PLAYERS_COLLECTION = 'players';
+const EDIT_PIN = "2580"; // change this to your own PIN
+const TOURNAMENT_LOGO = 'titans-super-cup-logo.png';
+
+/* Cloudinary — free image hosting (no Firebase Storage / Blaze plan needed) */
+const CLOUDINARY = {
+  cloudName: 'kxhnbi19',
+  uploadPreset: 'tournament_unsigned'
+};
+
+let db=null;
+let page='home';
+let settings = {
+  name:"My Tournament",
+  seasonLabel:"2026",
+  fee:500,
+  managerFee:500,
+  maxSlots:32,
+  maxTeams:16,
+  tournamentDate:'',
+  tournamentTime:'',
+  venue:'',
+  venueUrl:'',
+  logoUrl:'',
+  registrationOpen:true,
+  registrationCloseDate:'',
+  registrationCloseTime:'23:59',
+  qrUrl:'',
+  photoRequired:true,
+  auctionDeskVisible:true,
+  nextSerial:1,
+  updatedAt:0
+};
+let players = []; // live array from Firestore
+let editMode = false;
+let deadlineTimer = null;
+
+const PLAYER_POSITIONS = [
+  { value:'GK', label:'Goalkeeper (GK)' },
+  { value:'DF', label:'Defender (DF)' },
+  { value:'FW', label:'Forward (FW)' }
+];
+function positionLabel(code){
+  if(!code) return '';
+  if(code === 'MGR') return 'Manager';
+  const found = PLAYER_POSITIONS.find(p=>p && p.value===code);
+  return found ? found.label : String(code);
+}
+function managerFeeAmount(){
+  const n = Number(settings.managerFee);
+  return Number.isFinite(n) && n >= 0 ? n : Number(settings.fee)||0;
+}
+function registrationFeeForRole(role){
+  return role === 'manager' ? managerFeeAmount() : (Number(settings.fee)||0);
+}
+function roleLabel(role){
+  return role === 'manager' ? 'Manager' : 'Player';
+}
+let regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'online', submitting:false, msg:null };
+let adminState = { tab:'players', search:'', statusFilter:'all', editPlayer:null, settingsDraft:null, qrFile:null, qrPreview:'', qrUrlDraft:null, qrRemoved:false, loginErr:'', settingsMsg:null };
+
+/* Face-focused photo cropper (portrait 7:8) */
+const PHOTO_CROP_OUT_W = 420;
+const PHOTO_CROP_OUT_H = 480;
+let photoCrop = {
+  open:false,
+  src:'',
+  naturalW:0,
+  naturalH:0,
+  scale:1,
+  minScale:1,
+  maxScale:4,
+  x:0,
+  y:0,
+  dragging:false,
+  lastX:0,
+  lastY:0,
+  pinchDist:0
+};
+
+const PUBLIC_PAGES = [
+  {id:'home', label:'Home'},
+  {id:'register', label:'Register'},
+  {id:'players', label:'Players'},
+  {id:'admin', label:'Admin'}
+];
+/* Auction desk is a sibling page: tournament-auction.html */
+
+function setFbStatus(text, cls){
+  const el = document.getElementById('fbStatus');
+  if(!el) return;
+  el.textContent = text; el.className = 'fb-status ' + (cls||'');
+}
+function isFirebaseConfigured(){ return firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('YOUR_'); }
+
+async function uploadToCloudinary(file){
+  if(!CLOUDINARY.cloudName || CLOUDINARY.cloudName.startsWith('YOUR_') || !CLOUDINARY.uploadPreset || CLOUDINARY.uploadPreset.startsWith('YOUR_')){
+    throw new Error('Cloudinary is not configured — set cloudName and an unsigned uploadPreset in this file');
+  }
+  const form = new FormData();
+  form.append('file', file);
+  form.append('upload_preset', CLOUDINARY.uploadPreset);
+  let res, data;
+  try{
+    res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/auto/upload`,
+      { method:'POST', body: form }
+    );
+    data = await res.json().catch(()=>({}));
+  }catch(err){
+    throw new Error('Network error uploading to Cloudinary. Check your connection.');
+  }
+  if(!res.ok || !data.secure_url){
+    const msg = data && data.error && data.error.message ? data.error.message : ('Cloudinary upload failed (HTTP '+res.status+')');
+    throw new Error(msg + ' — verify cloud name "'+CLOUDINARY.cloudName+'" and that preset "'+CLOUDINARY.uploadPreset+'" is Unsigned.');
+  }
+  return data.secure_url;
+}
+function currentQrUrl(){
+  if(adminState.qrRemoved) return '';
+  if(adminState.qrPreview) return adminState.qrPreview;
+  const draft = adminState.qrUrlDraft;
+  if(draft !== null && draft !== undefined) return String(draft).trim();
+  return String(settings.qrUrl||'').trim();
+}
+function clearAdminQr(){
+  adminState.qrFile = null;
+  adminState.qrPreview = '';
+  adminState.qrUrlDraft = '';
+  adminState.qrRemoved = true;
+  adminState.settingsMsg = {type:'ok', text:'QR cleared in the form — click Save Settings to apply.'};
+  render();
+}
+function useQrImageUrl(){
+  const el = document.getElementById('setQrUrl');
+  if(!el) return;
+  const url = (el.value||'').trim();
+  if(!url){
+    adminState.settingsMsg = {type:'err', text:'Paste a public image URL for the QR code first.'};
+    render();
+    return;
+  }
+  if(!/^https?:\/\//i.test(url)){
+    adminState.settingsMsg = {type:'err', text:'QR image URL must start with http:// or https://'};
+    render();
+    return;
+  }
+  adminState.qrFile = null;
+  adminState.qrPreview = '';
+  adminState.qrUrlDraft = url;
+  adminState.qrRemoved = false;
+  adminState.settingsMsg = {type:'ok', text:'QR URL set in the form — click Save Settings to apply.'};
+  render();
+}
+
+function initFirebase(){
+  if(!isFirebaseConfigured()){
+    setFbStatus('Paste your Firebase config in this file', 'err');
+    render();
+    return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    setFbStatus('Connected', 'ok');
+    listenSettings();
+    listenPlayers();
+  }catch(e){
+    console.error(e);
+    setFbStatus('Firebase init failed', 'err');
+    render();
+  }
+}
+
+function listenSettings(){
+  const ref = db.collection(SETTINGS_PATH.collection).doc(SETTINGS_PATH.id);
+  ref.onSnapshot(snap=>{
+    if(!snap.exists){
+      ref.set(settings).catch(e=>console.error(e));
+      return;
+    }
+    settings = Object.assign(settings, snap.data());
+    render();
+  }, err=>{ console.error(err); setFbStatus('Settings listen failed — check rules','err'); });
+}
+function listenPlayers(){
+  db.collection(PLAYERS_COLLECTION).onSnapshot(snap=>{
+    players = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+    render();
+  }, err=>{ console.error(err); setFbStatus('Players listen failed — check rules','err'); });
+}
+function saveSettings(patch){
+  Object.assign(settings, patch, {updatedAt:Date.now()});
+  if(!db) return Promise.reject(new Error('Not connected to Firebase'));
+  return db.collection(SETTINGS_PATH.collection).doc(SETTINGS_PATH.id).set(Object.assign({}, settings), {merge:true});
+}
+
+/* ---------- derived numbers ---------- */
+function confirmedPlayers(){ return players.filter(p=>p.status==='confirmed').sort((a,b)=>(a.serial||0)-(b.serial||0)); }
+function pendingPlayers(){ return players.filter(p=>p.status==='pending').sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)); }
+function rejectedPlayers(){ return players.filter(p=>p.status==='rejected'); }
+function filledSlots(){ return players.filter(p=>p.status==='pending'||p.status==='confirmed').length; }
+function availableSlots(){ return Math.max(0, (settings.maxSlots||0) - filledSlots()); }
+function isCountedRegistration(p){ return p && (p.status==='pending' || p.status==='confirmed'); }
+function maxTeamSlots(){ return Math.max(0, Number(settings.maxTeams)||0); }
+function isManagerEntry(p){ return p && (p.role==='manager' || p.position==='MGR'); }
+function isGoalkeeperEntry(p){ return p && !isManagerEntry(p) && String(p.position||'').toUpperCase()==='GK'; }
+function filledManagerSlots(){ return players.filter(p=>isCountedRegistration(p) && isManagerEntry(p)).length; }
+function availableManagerSlots(){ return Math.max(0, maxTeamSlots() - filledManagerSlots()); }
+function filledGoalkeeperSlots(){ return players.filter(p=>isCountedRegistration(p) && isGoalkeeperEntry(p)).length; }
+function availableGoalkeeperSlots(){ return Math.max(0, maxTeamSlots() - filledGoalkeeperSlots()); }
+function parseRegistrationCloseAt(){
+  const dateRaw = String(settings.registrationCloseDate||'').trim();
+  if(!dateRaw) return null;
+  const timeRaw = String(settings.registrationCloseTime||'23:59').trim() || '23:59';
+  const d = new Date(dateRaw + 'T' + timeRaw + ':00');
+  if(isNaN(d.getTime())) return null;
+  return d;
+}
+function isPastRegistrationDeadline(){
+  const closeAt = parseRegistrationCloseAt();
+  return !!(closeAt && Date.now() > closeAt.getTime());
+}
+function isRegistrationOpen(){
+  return !!settings.registrationOpen && availableSlots()>0 && !isPastRegistrationDeadline();
+}
+function registrationClosedReason(){
+  if(isPastRegistrationDeadline()) return 'deadline';
+  if(!settings.registrationOpen) return 'organizer';
+  if(availableSlots()<=0) return 'full';
+  return '';
+}
+
+function escapeHtml(str){
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+function formatTournamentDate(raw){
+  if(!raw) return '';
+  const d = new Date(raw + 'T00:00:00');
+  if(isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+}
+function formatTournamentTime(raw){
+  if(!raw) return '';
+  const parts = String(raw).split(':');
+  if(parts.length < 2) return raw;
+  const h = Number(parts[0]), m = Number(parts[1]);
+  if(!Number.isFinite(h) || !Number.isFinite(m)) return raw;
+  const d = new Date(); d.setHours(h, m, 0, 0);
+  return d.toLocaleTimeString('en-IN', { hour:'numeric', minute:'2-digit' });
+}
+function formatDeadlineLong(closeAt){
+  return closeAt.toLocaleDateString('en-IN', {
+    weekday:'long', day:'numeric', month:'long', year:'numeric'
+  });
+}
+function getDeadlineCountdown(closeAt){
+  const ms = Math.max(0, closeAt.getTime() - Date.now());
+  const totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  return { days, hours, mins, secs, done: ms <= 0 };
+}
+function pad2(n){ return String(n).padStart(2, '0'); }
+function registrationDeadlineHtml(){
+  const closeAt = parseRegistrationCloseAt();
+  if(!closeAt) return '';
+  const closed = isPastRegistrationDeadline() || !settings.registrationOpen;
+  const count = getDeadlineCountdown(closeAt);
+  const timeStr = formatTournamentTime(settings.registrationCloseTime || '23:59');
+  const longDate = formatDeadlineLong(closeAt);
+  const kicker = closed ? 'Registration Closed' : 'Registration Closes';
+  const title = closed
+    ? (isPastRegistrationDeadline() ? 'Deadline has passed' : 'Closed by organizer')
+    : escapeHtml(longDate);
+  const sub = closed
+    ? `Official deadline was ${escapeHtml(longDate)}${timeStr ? ' · ' + escapeHtml(timeStr) : ''}`
+    : `Entries accepted until ${escapeHtml(timeStr || 'end of day')}`;
+  return `
+    <div class="reg-deadline ${closed ? 'closed' : ''}" id="regDeadline">
+      <div class="reg-deadline-copy">
+        <div class="reg-deadline-kicker">${kicker}</div>
+        <div class="reg-deadline-title">${title}</div>
+        <div class="reg-deadline-sub">${sub}</div>
+      </div>
+      <div class="reg-deadline-count" aria-label="Time remaining">
+        <div class="reg-deadline-unit"><span class="n" data-unit="days">${pad2(count.days)}</span><span class="l">Days</span></div>
+        <div class="reg-deadline-unit"><span class="n" data-unit="hours">${pad2(count.hours)}</span><span class="l">Hrs</span></div>
+        <div class="reg-deadline-unit"><span class="n" data-unit="mins">${pad2(count.mins)}</span><span class="l">Mins</span></div>
+        <div class="reg-deadline-unit"><span class="n" data-unit="secs">${pad2(count.secs)}</span><span class="l">Secs</span></div>
+      </div>
+    </div>`;
+}
+function stopDeadlineTimer(){
+  if(deadlineTimer){ clearInterval(deadlineTimer); deadlineTimer = null; }
+}
+function startDeadlineTimer(){
+  stopDeadlineTimer();
+  const closeAt = parseRegistrationCloseAt();
+  if(!closeAt) return;
+  deadlineTimer = setInterval(()=>{
+    const root = document.getElementById('regDeadline');
+    if(!root){ stopDeadlineTimer(); return; }
+    const count = getDeadlineCountdown(closeAt);
+    const map = { days:count.days, hours:count.hours, mins:count.mins, secs:count.secs };
+    Object.keys(map).forEach(key=>{
+      const el = root.querySelector('[data-unit="'+key+'"]');
+      if(el) el.textContent = pad2(map[key]);
+    });
+    if(count.done && !root.classList.contains('closed')){
+      stopDeadlineTimer();
+      render();
+    }
+  }, 1000);
+}
+function tournamentFactsHtml(){
+  const dateStr = formatTournamentDate(settings.tournamentDate) || 'To be announced';
+  const timeStr = formatTournamentTime(settings.tournamentTime) || 'To be announced';
+  const venue = String(settings.venue||'').trim() || 'To be announced';
+  const venueUrl = String(settings.venueUrl||'').trim();
+  const teams = Number(settings.maxTeams) || 0;
+  const venueHtml = venueUrl
+    ? `<a class="venue-link" href="${escapeHtml(venueUrl)}" target="_blank" rel="noopener noreferrer"><span class="venue-name">${escapeHtml(venue)}</span><div class="venue-hint">Click for location →</div></a>`
+    : escapeHtml(venue);
+  return `
+    <div class="hero-facts">
+      <div class="hero-fact">
+        <div class="meta-label">Date</div>
+        <div class="meta-value">${escapeHtml(dateStr)}</div>
+      </div>
+      <div class="hero-fact">
+        <div class="meta-label">Time</div>
+        <div class="meta-value">${escapeHtml(timeStr)}</div>
+      </div>
+      <div class="hero-fact">
+        <div class="meta-label">Venue</div>
+        <div class="meta-value">${venueHtml}</div>
+      </div>
+      <div class="hero-fact">
+        <div class="meta-label">Teams</div>
+        <div class="meta-value accent">${teams > 0 ? teams : '—'}</div>
+      </div>
+    </div>`;
+}
+
+/* ---------- nav ---------- */
+function buildNav(){
+  const navLinks = document.getElementById('navLinks');
+  const mobileNav = document.getElementById('mobileNav');
+  navLinks.innerHTML=''; mobileNav.innerHTML='';
+  PUBLIC_PAGES.forEach(p=>{
+    const b1=document.createElement('button');
+    b1.textContent=p.label; if(page===p.id) b1.classList.add('active');
+    b1.onclick=()=>navigate(p.id);
+    navLinks.appendChild(b1);
+    const b2=document.createElement('button');
+    b2.textContent=p.label; if(page===p.id) b2.classList.add('active');
+    b2.onclick=()=>{ navigate(p.id); document.getElementById('mobileNav').classList.remove('open'); };
+    mobileNav.appendChild(b2);
+  });
+}
+function navigate(p){ page=p; window.scrollTo({top:0,behavior:'smooth'}); render(); }
+document.getElementById('hamburgerBtn').onclick=()=>document.getElementById('mobileNav').classList.toggle('open');
+
+/* ============================================================
+   PUBLIC: HOME
+   ============================================================ */
+function renderHome(){
+  const filled = filledSlots(), max = settings.maxSlots||0, avail = availableSlots();
+  const pct = max>0 ? Math.min(100, Math.round((filled/max)*100)) : 0;
+  const mgrFilled = filledManagerSlots();
+  const mgrMax = maxTeamSlots();
+  const mgrAvail = availableManagerSlots();
+  const mgrPct = mgrMax>0 ? Math.min(100, Math.round((mgrFilled/mgrMax)*100)) : 0;
+  const open = isRegistrationOpen();
+  const reason = registrationClosedReason();
+  const statusCls = reason ? 'closed' : '';
+  const statusText = reason === 'deadline'
+    ? 'Registration deadline has passed'
+    : (reason === 'organizer'
+      ? 'Registration closed by organizer'
+      : (reason === 'full' ? 'All slots are full' : avail + ' slot' + (avail===1?'':'s') + ' remaining'));
+  const mgrStatusCls = mgrAvail<=0 ? 'full' : '';
+  const mgrStatusText = mgrAvail<=0
+    ? 'All manager spots are full'
+    : mgrAvail + ' manager slot' + (mgrAvail===1?'':'s') + ' remaining';
+  return `
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <div class="hero-eyebrow">Official Registration Desk</div>
+          <h1><span class="hero-title-name">${escapeHtml(settings.name)}</span>${settings.seasonLabel ? `<span class="hero-year">${escapeHtml(settings.seasonLabel)}</span>` : ''}</h1>
+          <p class="hero-lead">Reserve your spot for this season. Complete registration and await confirmation from the organizer.</p>
+        </div>
+        <div class="hero-logo">
+          <img src="${TOURNAMENT_LOGO}" alt="Titans Super Cup logo">
+        </div>
+      </div>
+      ${tournamentFactsHtml()}
+      <div class="hero-bottom${parseRegistrationCloseAt() ? '' : ' no-deadline'}">
+        <div class="hero-left">
+          <div class="hero-slots">
+            <div class="hero-slots-top"><span>Slots Filled</span><strong>${filled} / ${max}</strong></div>
+            <div class="slot-bar"><div class="slot-bar-fill" style="width:${pct}%"></div></div>
+            <div class="hero-slots-status ${statusCls}">${statusText}</div>
+          </div>
+          <div class="hero-slots">
+            <div class="hero-slots-top"><span>Manager Slots</span><strong>${mgrFilled} / ${mgrMax}</strong></div>
+            <div class="slot-bar"><div class="slot-bar-fill" style="width:${mgrPct}%"></div></div>
+            <div class="hero-slots-status ${mgrStatusCls}">${mgrStatusText}</div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="navigate('register')" ${open?'':'disabled'}>${open?'Register Now →':'Registration Closed'}</button>
+            <button class="btn btn-outline" onclick="navigate('players')">View Player List</button>
+          </div>
+        </div>
+        ${registrationDeadlineHtml()}
+      </div>
+    </div>
+    <div class="section-label">Overview</div>
+    <div class="grid-4">
+      <div class="stat-card"><div class="stat-label">Entry Fee</div><div class="stat-value amber">₹${settings.fee}</div><div class="page-sub" style="margin:0;">per player · manager ₹${managerFeeAmount()}</div></div>
+      <div class="stat-card"><div class="stat-label">Slots</div><div class="stat-value">${max}</div></div>
+      <div class="stat-card"><div class="stat-label">Confirmed</div><div class="stat-value green">${confirmedPlayers().length}</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-value amber">${pendingPlayers().length}</div></div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   PUBLIC: REGISTER
+   ============================================================ */
+function resetRegForm(){ regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'online', submitting:false, msg:null }; }
+
+/* ---------- Face-focused photo crop ---------- */
+function closePhotoCrop(){
+  photoCrop.open = false;
+  photoCrop.src = '';
+  photoCrop.dragging = false;
+  photoCrop.pinchDist = 0;
+  const root = document.getElementById('photoCropRoot');
+  if(root) root.innerHTML = '';
+}
+
+function openPhotoCrop(dataUrl){
+  const img = new Image();
+  img.onload = ()=>{
+    photoCrop.open = true;
+    photoCrop.src = dataUrl;
+    photoCrop.naturalW = img.naturalWidth;
+    photoCrop.naturalH = img.naturalHeight;
+    photoCrop.scale = 1;
+    photoCrop.minScale = 1;
+    photoCrop.maxScale = 4;
+    photoCrop.x = 0;
+    photoCrop.y = 0;
+    renderPhotoCropModal();
+    // Fit image to cover the portrait viewport, biased slightly upward for faces
+    requestAnimationFrame(()=>{
+      const vp = document.getElementById('cropViewport');
+      if(!vp) return;
+      const vw = vp.clientWidth;
+      const vh = vp.clientHeight;
+      const cover = Math.max(vw / photoCrop.naturalW, vh / photoCrop.naturalH);
+      photoCrop.minScale = cover;
+      photoCrop.scale = cover * 1.08;
+      photoCrop.maxScale = Math.max(cover * 4, 4);
+      // Bias crop upward so faces near top of photo land in the oval
+      photoCrop.x = 0;
+      // Nudge upward so faces near the top of a group/selfie land in the oval
+      photoCrop.y = Math.min((photoCrop.naturalH * photoCrop.scale - vh) / 2, vh * 0.08);
+      clampPhotoCrop();
+      updatePhotoCropTransform();
+      const zoom = document.getElementById('cropZoom');
+      if(zoom){
+        zoom.min = String(photoCrop.minScale);
+        zoom.max = String(photoCrop.maxScale);
+        zoom.step = '0.01';
+        zoom.value = String(photoCrop.scale);
+      }
+    });
+  };
+  img.onerror = ()=> alert('Could not read that photo. Try another image.');
+  img.src = dataUrl;
+}
+
+function renderPhotoCropModal(){
+  const root = document.getElementById('photoCropRoot');
+  if(!root) return;
+  root.innerHTML = `
+    <div class="modal-backdrop crop-modal" id="photoCropBackdrop">
+      <div class="modal-card">
+        <h2>Crop Face Photo</h2>
+        <p class="crop-hint">Drag to move · pinch or use the slider to zoom. Keep your face inside the rounded frame.</p>
+        <div class="crop-viewport" id="cropViewport">
+          <div class="crop-stage" id="cropStage">
+            <img id="cropImg" src="${photoCrop.src}" alt="Crop preview" draggable="false">
+          </div>
+          <div class="crop-face-guide" aria-hidden="true">
+            <div class="crop-face-frame"></div>
+            <div class="crop-face-label">Face here</div>
+          </div>
+        </div>
+        <div class="crop-controls">
+          <div class="crop-zoom-row">
+            <label for="cropZoom">Zoom</label>
+            <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1">
+          </div>
+        </div>
+        <div class="crop-actions">
+          <button type="button" class="btn btn-outline" id="cropCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="cropApplyBtn">Use This Crop</button>
+        </div>
+      </div>
+    </div>`;
+  wirePhotoCropEvents();
+}
+
+function updatePhotoCropTransform(){
+  const img = document.getElementById('cropImg');
+  const vp = document.getElementById('cropViewport');
+  if(!img || !vp || !photoCrop.naturalW) return;
+  const vw = vp.clientWidth;
+  const vh = vp.clientHeight;
+  const dw = photoCrop.naturalW * photoCrop.scale;
+  const dh = photoCrop.naturalH * photoCrop.scale;
+  // photoCrop.x/y = offset of image top-left from the cover-centered position
+  const baseX = (vw - dw) / 2;
+  const baseY = (vh - dh) / 2;
+  img.style.width = dw + 'px';
+  img.style.height = dh + 'px';
+  img.style.left = (baseX + photoCrop.x) + 'px';
+  img.style.top = (baseY + photoCrop.y) + 'px';
+}
+
+function clampPhotoCrop(){
+  const vp = document.getElementById('cropViewport');
+  if(!vp || !photoCrop.naturalW) return;
+  const vw = vp.clientWidth;
+  const vh = vp.clientHeight;
+  const dw = photoCrop.naturalW * photoCrop.scale;
+  const dh = photoCrop.naturalH * photoCrop.scale;
+  // left = (vw-dw)/2 + x must stay in [vw-dw, 0] so the frame stays filled
+  const maxOffsetX = (dw - vw) / 2;
+  const maxOffsetY = (dh - vh) / 2;
+  photoCrop.x = Math.min(maxOffsetX, Math.max(-maxOffsetX, photoCrop.x));
+  photoCrop.y = Math.min(maxOffsetY, Math.max(-maxOffsetY, photoCrop.y));
+}
+
+function setPhotoCropScale(next){
+  const prev = photoCrop.scale;
+  photoCrop.scale = Math.min(photoCrop.maxScale, Math.max(photoCrop.minScale, next));
+  if(prev > 0){
+    const ratio = photoCrop.scale / prev;
+    photoCrop.x *= ratio;
+    photoCrop.y *= ratio;
+  }
+  clampPhotoCrop();
+  updatePhotoCropTransform();
+  const zoom = document.getElementById('cropZoom');
+  if(zoom && Math.abs(Number(zoom.value) - photoCrop.scale) > 0.001) zoom.value = String(photoCrop.scale);
+}
+
+function wirePhotoCropEvents(){
+  const backdrop = document.getElementById('photoCropBackdrop');
+  const vp = document.getElementById('cropViewport');
+  const zoom = document.getElementById('cropZoom');
+  const cancelBtn = document.getElementById('cropCancelBtn');
+  const applyBtn = document.getElementById('cropApplyBtn');
+  if(backdrop) backdrop.addEventListener('click', e=>{ if(e.target===backdrop) closePhotoCrop(); });
+  if(cancelBtn) cancelBtn.addEventListener('click', closePhotoCrop);
+  if(applyBtn) applyBtn.addEventListener('click', applyPhotoCrop);
+  if(zoom) zoom.addEventListener('input', e=> setPhotoCropScale(Number(e.target.value)));
+
+  if(!vp) return;
+
+  const onPointerDown = (e)=>{
+    if(e.pointerType==='touch' && e.isPrimary===false) return;
+    photoCrop.dragging = true;
+    photoCrop.lastX = e.clientX;
+    photoCrop.lastY = e.clientY;
+    vp.classList.add('dragging');
+    try{ vp.setPointerCapture(e.pointerId); }catch(_){}
+  };
+  const onPointerMove = (e)=>{
+    if(!photoCrop.dragging) return;
+    const dx = e.clientX - photoCrop.lastX;
+    const dy = e.clientY - photoCrop.lastY;
+    photoCrop.lastX = e.clientX;
+    photoCrop.lastY = e.clientY;
+    photoCrop.x += dx;
+    photoCrop.y += dy;
+    clampPhotoCrop();
+    updatePhotoCropTransform();
+  };
+  const onPointerUp = (e)=>{
+    photoCrop.dragging = false;
+    vp.classList.remove('dragging');
+    try{ vp.releasePointerCapture(e.pointerId); }catch(_){}
+  };
+  vp.addEventListener('pointerdown', onPointerDown);
+  vp.addEventListener('pointermove', onPointerMove);
+  vp.addEventListener('pointerup', onPointerUp);
+  vp.addEventListener('pointercancel', onPointerUp);
+
+  vp.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 0.94 : 1.06;
+    setPhotoCropScale(photoCrop.scale * factor);
+  }, {passive:false});
+
+  // Pinch zoom
+  vp.addEventListener('touchstart', e=>{
+    if(e.touches.length===2){
+      photoCrop.dragging = false;
+      const a = e.touches[0], b = e.touches[1];
+      photoCrop.pinchDist = Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
+    }
+  }, {passive:true});
+  vp.addEventListener('touchmove', e=>{
+    if(e.touches.length===2 && photoCrop.pinchDist){
+      e.preventDefault();
+      const a = e.touches[0], b = e.touches[1];
+      const dist = Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
+      setPhotoCropScale(photoCrop.scale * (dist / photoCrop.pinchDist));
+      photoCrop.pinchDist = dist;
+    }
+  }, {passive:false});
+  vp.addEventListener('touchend', e=>{
+    if(e.touches.length < 2) photoCrop.pinchDist = 0;
+  });
+}
+
+async function applyPhotoCrop(){
+  const vp = document.getElementById('cropViewport');
+  if(!vp || !photoCrop.src) return;
+  const vw = vp.clientWidth;
+  const vh = vp.clientHeight;
+  const img = new Image();
+  img.src = photoCrop.src;
+  await new Promise((resolve, reject)=>{
+    if(img.complete && img.naturalWidth) resolve();
+    else{ img.onload = resolve; img.onerror = reject; }
+  });
+
+  const s = photoCrop.scale;
+  const dw = photoCrop.naturalW * s;
+  const dh = photoCrop.naturalH * s;
+  const left = (vw - dw) / 2 + photoCrop.x;
+  const top = (vh - dh) / 2 + photoCrop.y;
+  // Viewport (0,0)-(vw,vh) in image pixels
+  let sx = -left / s;
+  let sy = -top / s;
+  let sw = vw / s;
+  let sh = vh / s;
+  sx = Math.min(Math.max(0, sx), Math.max(0, photoCrop.naturalW - sw));
+  sy = Math.min(Math.max(0, sy), Math.max(0, photoCrop.naturalH - sh));
+  sw = Math.min(sw, photoCrop.naturalW - sx);
+  sh = Math.min(sh, photoCrop.naturalH - sy);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = PHOTO_CROP_OUT_W;
+  canvas.height = PHOTO_CROP_OUT_H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0A0E16';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+  if(!blob){ alert('Could not crop photo. Try again.'); return; }
+  const file = new File([blob], 'player-photo.jpg', { type:'image/jpeg' });
+  regState.photoFile = file;
+  regState.photoPreview = canvas.toDataURL('image/jpeg', 0.92);
+  closePhotoCrop();
+  render();
+}
+
+function normalizeIndianPhone(raw){
+  let d = String(raw||'').replace(/\D/g,'');
+  if(d.startsWith('91') && d.length===12) d = d.slice(2);
+  if(d.startsWith('0') && d.length===11) d = d.slice(1);
+  return d;
+}
+function isValidIndianPhone(raw){
+  return /^[6-9]\d{9}$/.test(normalizeIndianPhone(raw));
+}
+function syncRegFieldsFromDom(){
+  const nameEl = document.getElementById('regName');
+  const phoneEl = document.getElementById('regPhone');
+  const posEl = document.getElementById('regPosition');
+  const teamEl = document.getElementById('regTeamName');
+  if(nameEl) regState.name = nameEl.value;
+  if(phoneEl) regState.phone = phoneEl.value;
+  if(posEl) regState.position = posEl.value;
+  if(teamEl) regState.teamName = teamEl.value;
+}
+
+function renderRegister(){
+  if(regState.msg && regState.msg.type==='success'){
+    return `
+      <div class="page-title">Register</div>
+      <div class="card confirm-box">
+        <div class="ico">✓</div>
+        <h2>You're on the list!</h2>
+        <p>${regState.msg.text}</p>
+        <div class="hero-actions" style="justify-content:center; margin-top:20px;">
+          <button class="btn btn-outline" onclick="navigate('players')">View Player List</button>
+          <button class="btn btn-primary" onclick="startNewRegistration()">Register Another</button>
+        </div>
+      </div>`;
+  }
+
+  if(!isRegistrationOpen()){
+    const reason = registrationClosedReason();
+    const closeAt = parseRegistrationCloseAt();
+    let msg = 'All slots are full — registration is closed.';
+    if(reason === 'deadline'){
+      const when = closeAt ? formatDeadlineLong(closeAt) : 'the official deadline';
+      msg = 'Registration closed on ' + when + '. New entries are no longer accepted.';
+    }else if(reason === 'organizer'){
+      msg = 'Registration is currently closed by the organizer.';
+    }
+    return `
+      <div class="page-title">Register</div>
+      <div class="card">
+        <div class="form-msg err">${msg}</div>
+        <button class="btn btn-outline" onclick="navigate('home')">Back to Home</button>
+      </div>`;
+  }
+
+  const m = regState.msg;
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const closeAt = parseRegistrationCloseAt();
+  const deadlineNote = closeAt
+    ? ` · Closes ${escapeHtml(formatDeadlineLong(closeAt))}${settings.registrationCloseTime ? ' · ' + escapeHtml(formatTournamentTime(settings.registrationCloseTime)) : ''}`
+    : '';
+  const mgrAvail = availableManagerSlots();
+  const gkAvail = availableGoalkeeperSlots();
+  const teamCap = maxTeamSlots();
+  if(regState.role === 'manager' && mgrAvail <= 0){
+    regState.role = 'player';
+    regState.teamName = '';
+  }
+  if(regState.role !== 'manager' && String(regState.position||'').toUpperCase()==='GK' && gkAvail <= 0){
+    regState.position = '';
+  }
+  const isManager = regState.role === 'manager';
+  const feeNow = registrationFeeForRole(regState.role);
+  const feeNote = isManager
+    ? `Manager fee ₹${feeNow}`
+    : `Player fee ₹${feeNow}`;
+  const mgrFeeLabel = `₹${managerFeeAmount()}`;
+  const slotNote = `${availableSlots()} slot${availableSlots()===1?'':'s'} remaining`;
+  const subCounts = isManager
+    ? `${mgrAvail} manager${mgrAvail===1?'':'s'} remaining`
+    : `${slotNote} · ${gkAvail} GK`;
+  const positionOptions = PLAYER_POSITIONS.filter(Boolean).map(p=>{
+    const isGk = p.value === 'GK';
+    const gkFull = isGk && gkAvail <= 0;
+    const selected = !gkFull && regState.position===p.value ? 'selected' : '';
+    const disabled = gkFull ? 'disabled' : '';
+    const label = isGk
+      ? (gkFull ? `${p.label} — all ${teamCap} spots taken` : `${p.label} — ${gkAvail} of ${teamCap} remaining`)
+      : p.label;
+    return `<option value="${p.value}" ${selected} ${disabled}>${label}</option>`;
+  }).join('');
+  return `
+    <div class="page-title">Register</div>
+    <div class="page-sub">${feeNote} · ${subCounts}${deadlineNote}</div>
+    <div class="card">
+      ${m && m.type==='error' ? `<div class="form-msg err">${m.text}</div>` : ''}
+      <form id="regForm" onsubmit="return false;">
+        <div class="field">
+          <label>Register As *</label>
+          <div class="role-toggle">
+            <div class="role-opt ${!isManager?'active':''}" data-role="player">Player<span class="role-fee">₹${settings.fee}</span></div>
+            <div class="role-opt ${isManager?'active':''} ${mgrAvail<=0?'disabled':''}" data-role="manager">Manager<span class="role-fee">${mgrFeeLabel}</span></div>
+          </div>
+          ${isManager
+            ? (mgrAvail<=0
+              ? `<div class="hint">Manager spots are full — one per team (${teamCap} teams).</div>`
+              : `<div class="hint">One manager per team. ${mgrAvail} of ${teamCap} remaining.</div>`)
+            : ''}
+        </div>
+        <div class="field">
+          <label>Full Name *</label>
+          <input type="text" id="regName" placeholder="${isManager ? 'e.g. Team Manager Name' : 'e.g. Mesut Ozil'}" autocomplete="name" value="${esc(regState.name)}" required>
+        </div>
+        <div class="field">
+          <label>Phone Number *</label>
+          <input type="tel" id="regPhone" placeholder="e.g. 9876543210" autocomplete="tel" inputmode="numeric" maxlength="10" value="${esc(regState.phone)}" required>
+        </div>
+        ${isManager ? `
+        <div class="field">
+          <label>Team Name *</label>
+          <input type="text" id="regTeamName" placeholder="e.g. Thunder FC" value="${esc(regState.teamName)}" required>
+        </div>` : `
+        <div class="field">
+          <label>Playing Position *</label>
+          <select id="regPosition" required>
+            <option value="" ${!regState.position?'selected':''}>Select position</option>
+            ${positionOptions}
+          </select>
+          ${gkAvail<=0 ? `<div class="hint">Goalkeeper spots are full — one per team (${teamCap} teams).</div>` : `<div class="hint">One goalkeeper per team. ${gkAvail} of ${teamCap} remaining.</div>`}
+        </div>`}
+        <div class="field">
+          <label>${isManager ? 'Photo' : 'Player Photo'} ${settings.photoRequired!==false ? '*' : '(optional)'}</label>
+          <div class="photo-drop" onclick="document.getElementById('regPhoto').click()">
+            ${regState.photoPreview ? `<img class="photo-preview" src="${regState.photoPreview}">` : ''}
+            <div style="font-size:13px; color:var(--chalk-dim);">${regState.photoFile ? 'Face crop ready — tap to change photo' : (settings.photoRequired!==false ? 'Tap to upload a photo (JPG/PNG, max 5MB) — required' : 'Tap to upload a photo (JPG/PNG, max 5MB) — optional')}</div>
+          </div>
+          <div class="photo-hint">After picking a photo you’ll crop it to a rounded portrait frame focused on the face.</div>
+          <input type="file" id="regPhoto" accept="image/*" style="display:none">
+        </div>
+        <div class="field">
+          <label>Payment Method *</label>
+          <div class="pay-toggle">
+            <div class="pay-opt ${regState.method==='online'?'active':''}" data-method="online">Pay Online</div>
+            <div class="pay-opt ${regState.method==='cash'?'active':''}" data-method="cash">Pay Cash</div>
+          </div>
+        </div>
+        ${regState.method==='online' ? `
+          <div class="qr-box">
+            ${settings.qrUrl ? `<img src="${escapeHtml(settings.qrUrl)}" alt="Payment QR code" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="qr-missing" style="display:none;">QR image failed to load. Ask the organizer to re-upload it in Admin → Settings.</div>` : `<div class="qr-missing">Payment QR is not set yet. Organizer: open Admin → Settings → upload or paste a QR image, then Save Settings. Or choose Pay Cash.</div>`}
+            <div class="qr-hint">Scan to pay ₹${feeNow}, then upload your payment receipt below.</div>
+          </div>
+          <div class="field">
+            <label>Payment Receipt *</label>
+            <div class="photo-drop" onclick="document.getElementById('regReceipt').click()">
+              ${regState.receiptPreview ? `<img class="photo-preview" style="border-radius:8px; width:auto; max-width:140px; height:auto; max-height:140px;" src="${regState.receiptPreview}">` : ''}
+              <div style="font-size:13px; color:var(--chalk-dim);">${regState.receiptFile ? regState.receiptFile.name : 'Tap to upload payment screenshot / receipt (JPG/PNG/PDF, max 5MB) — required'}</div>
+            </div>
+            <input type="file" id="regReceipt" accept="image/*,application/pdf" style="display:none">
+          </div>` : `
+          <div class="field"><div class="hint">Pay ₹${feeNow} in cash to the organizer at the venue. Your slot stays pending until payment is confirmed.</div></div>
+        `}
+        <button class="btn btn-primary" id="regSubmitBtn" style="width:100%; justify-content:center; margin-top:6px;" type="button" ${regState.submitting?'disabled':''}>
+          ${regState.submitting ? `<span class="spinner"></span> Submitting…` : 'Submit Registration'}
+        </button>
+      </form>
+    </div>
+  `;
+}
+function startNewRegistration(){ resetRegForm(); render(); }
+
+async function submitRegistration(){
+  syncRegFieldsFromDom();
+  const role = regState.role === 'manager' ? 'manager' : 'player';
+  const name = (regState.name||'').trim();
+  const phoneRaw = (regState.phone||'').trim();
+  const phone = normalizeIndianPhone(phoneRaw);
+  const teamName = (regState.teamName||'').trim();
+  const position = role === 'manager' ? 'MGR' : (regState.position||'').trim();
+  const feePaid = registrationFeeForRole(role);
+
+  if(!name){ regState.msg={type:'error', text:'Please enter your full name.'}; render(); return; }
+  if(!phoneRaw){ regState.msg={type:'error', text:'Please enter your phone number.'}; render(); return; }
+  if(!isValidIndianPhone(phoneRaw)){ regState.msg={type:'error', text:'Enter a valid Indian mobile number (10 digits, starting with 6–9).'}; render(); return; }
+  if(role === 'manager'){
+    if(!teamName){ regState.msg={type:'error', text:'Please enter your team name.'}; render(); return; }
+    if(!availableManagerSlots()){
+      regState.msg={type:'error', text:`Manager spots are full — only ${maxTeamSlots()} managers can register (one per team).`};
+      render(); return;
+    }
+  }else if(!position || !PLAYER_POSITIONS.some(p=>p.value===position)){
+    regState.msg={type:'error', text:'Please select your playing position.'}; render(); return;
+  }else if(position === 'GK' && !availableGoalkeeperSlots()){
+    regState.msg={type:'error', text:`Goalkeeper spots are full — only ${maxTeamSlots()} goalkeepers can register (one per team).`};
+    render(); return;
+  }
+  if(settings.photoRequired!==false && !regState.photoFile){ regState.msg={type:'error', text:'Please upload a photo.'}; render(); return; }
+  if(!regState.method || (regState.method!=='online' && regState.method!=='cash')){
+    regState.msg={type:'error', text:'Please select a payment method.'}; render(); return;
+  }
+  if(regState.method==='online' && !regState.receiptFile){
+    regState.msg={type:'error', text:'Please upload your payment receipt for online payment.'}; render(); return;
+  }
+  if(!availableSlots()){ regState.msg={type:'error', text:'Sorry, all slots just filled up.'}; render(); return; }
+  if(!db){ regState.msg={type:'error', text:'Not connected to the database yet.'}; render(); return; }
+
+  regState.submitting = true; regState.msg = null; render();
+  try{
+    const docRef = db.collection(PLAYERS_COLLECTION).doc();
+    const photoUrl = regState.photoFile ? await uploadToCloudinary(regState.photoFile) : '';
+    let receiptUrl = '';
+    if(regState.method==='online' && regState.receiptFile){
+      receiptUrl = await uploadToCloudinary(regState.receiptFile);
+    }
+    await docRef.set({
+      name, phone: '+91'+phone, position, role, teamName: role==='manager' ? teamName : '',
+      feeAmount: feePaid,
+      photoUrl, receiptUrl,
+      paymentMethod: regState.method,
+      transactionId: '',
+      status: 'pending',
+      serial: null,
+      createdAt: Date.now()
+    });
+    regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'online', submitting:false,
+      msg:{type:'success', text:"Thanks, "+name+"! Your registration is in. Payment will be manually verified within 2 days, and you'll appear on the confirmed list once approved."} };
+    render();
+  }catch(e){
+    console.error(e);
+    regState.submitting = false;
+    regState.msg = {type:'error', text:'Something went wrong submitting your registration. Please try again.'};
+    render();
+  }
+}
+
+/* ============================================================
+   PUBLIC: PLAYER LIST
+   ============================================================ */
+function maskPhone(phone){
+  const s = String(phone||'').replace(/\s+/g,'');
+  if(!s) return '—';
+  // Keep country/prefix start + last 2 digits; mask the middle
+  if(s.length <= 4) return s[0] + '•'.repeat(Math.max(0,s.length-2)) + s.slice(-1);
+  return s.slice(0, 3) + '••••••' + s.slice(-2);
+}
+function renderPublicPlayers(){
+  const managers = players.filter(p=>isManagerEntry(p));
+  const fieldPlayers = players.filter(p=>!isManagerEntry(p));
+  const confirmedManagers = managers.filter(p=>p.status==='confirmed').sort((a,b)=>(a.serial||0)-(b.serial||0));
+  const pendingManagers = managers.filter(p=>p.status==='pending').sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const confirmed = fieldPlayers.filter(p=>p.status==='confirmed').sort((a,b)=>(a.serial||0)-(b.serial||0));
+  const pending = fieldPlayers.filter(p=>p.status==='pending').sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const avatarFallback = n => (n||'?').trim().charAt(0).toUpperCase();
+  const statusPill = (status) =>
+    `<span class="pill ${status}">${status==='confirmed'?'Confirmed':'Pending'}</span>`;
+  const photoCell = (p) => p.photoUrl
+    ? `<img src="${escapeHtml(p.photoUrl)}" alt="">`
+    : `<div class="plist-avatar">${avatarFallback(p.name)}</div>`;
+  const managerRow = (p, serialLabel) => `
+    <tr>
+      <td class="col-serial">${serialLabel}</td>
+      <td class="col-photo">${photoCell(p)}</td>
+      <td class="col-name">${escapeHtml(p.name||'')}</td>
+      <td class="col-position">${escapeHtml(p.teamName || '—')}</td>
+      <td class="col-phone">${escapeHtml(maskPhone(p.phone))}</td>
+      <td class="col-status">${statusPill(p.status)}</td>
+    </tr>`;
+  const playerRow = (p, serialLabel) => `
+    <tr>
+      <td class="col-serial">${serialLabel}</td>
+      <td class="col-photo">${photoCell(p)}</td>
+      <td class="col-name">${escapeHtml(p.name||'')}</td>
+      <td class="col-position">${escapeHtml(p.position ? positionLabel(p.position) : '—')}</td>
+      <td class="col-phone">${escapeHtml(maskPhone(p.phone))}</td>
+      <td class="col-status">${statusPill(p.status)}</td>
+    </tr>`;
+  const table = (list, serialFn, confirmedStyle, isManagerList) => `
+    <div class="plist-wrap">
+      <table class="plist ${confirmedStyle?'confirmed-list':''}">
+        <thead>
+          <tr>
+            <th>Serial</th>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>${isManagerList ? 'Team' : 'Position'}</th>
+            <th>Phone</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map((p,i)=>(isManagerList ? managerRow : playerRow)(p, serialFn(p,i))).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  const listBlock = (title, confirmedList, pendingList, emptyConfirmed, emptyPending, isManagerList) => {
+    let html = `<div class="page-title${isManagerList ? '' : ' section-break'}">${title}</div>`;
+    html += `<div class="page-sub">Confirmed entries get a permanent serial when approved · pending show their place in the waiting queue.</div>`;
+    html += `<div class="card"><h2>Confirmed (${confirmedList.length})</h2>`;
+    html += confirmedList.length
+      ? table(confirmedList, (p,i)=>'#'+(p.serial||i+1), true, isManagerList)
+      : `<div class="empty">${emptyConfirmed}</div>`;
+    html += `</div>`;
+    html += `<div class="card"><h2>Pending (${pendingList.length})</h2>`;
+    html += pendingList.length
+      ? table(pendingList, (p,i)=>'#'+(i+1), false, isManagerList)
+      : `<div class="empty">${emptyPending}</div>`;
+    html += `</div>`;
+    return html;
+  };
+
+  return listBlock('Manager List', confirmedManagers, pendingManagers, 'No confirmed managers yet.', 'No pending manager registrations.', true)
+    + listBlock('Player List', confirmed, pending, 'No confirmed players yet.', 'No pending registrations.', false);
+}
+
+/* ============================================================
+   ADMIN
+   ============================================================ */
+function renderAdmin(){
+  if(!editMode) return renderAdminLogin();
+  return renderAdminDashboard();
+}
+function renderAdminLogin(){
+  return `
+    <div class="login-shell">
+      <h2>Admin Login</h2>
+      ${adminState.loginErr ? `<div class="form-msg err">${adminState.loginErr}</div>` : ''}
+      <form id="adminLoginForm" autocomplete="off">
+        <div class="field">
+          <label for="adminPin">Password</label>
+          <input id="adminPin" type="password" inputmode="numeric" maxlength="32" placeholder="" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" type="submit">Sign In</button>
+      </form>
+    </div>`;
+}
+function doLogout(){
+  editMode = false;
+  adminState.tab = 'players';
+  adminState.loginErr = '';
+  adminState.editPlayer = null;
+  render();
+}
+
+function renderAdminDashboard(){
+  const tabs = [
+    {id:'players', label:'Players'},
+    {id:'settings', label:'Settings'},
+    {id:'stats', label:'Stats & Export'}
+  ];
+  let html = `
+    <div class="page-title">Admin Panel</div>
+    <div class="page-sub">Editing unlocked · <a href="#" onclick="doLogout();return false;" style="color:var(--amber);">Lock / Sign out</a></div>
+    <div class="admin-tabs">${tabs.map(t=>`<button class="admin-tab ${adminState.tab===t.id?'active':''}" onclick="setAdminTab('${t.id}')">${t.label}</button>`).join('')}</div>
+  `;
+  if(adminState.tab==='players') html += renderAdminPlayers();
+  else if(adminState.tab==='settings') html += renderAdminSettings();
+  else if(adminState.tab==='stats') html += renderAdminStats();
+
+  if(adminState.editPlayer) html += renderEditPlayerModal();
+  return html;
+}
+function setAdminTab(t){ adminState.tab=t; render(); }
+
+function filteredPlayers(){
+  let list = players.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(adminState.statusFilter!=='all') list = list.filter(p=>p.status===adminState.statusFilter);
+  if(adminState.search.trim()){
+    const q = adminState.search.trim().toLowerCase();
+    list = list.filter(p=>(p.name||'').toLowerCase().includes(q) || (p.phone||'').includes(q) || (p.position||'').toLowerCase().includes(q) || positionLabel(p.position).toLowerCase().includes(q) || (p.teamName||'').toLowerCase().includes(q) || roleLabel(p.role).toLowerCase().includes(q));
+  }
+  return list;
+}
+
+/** Display serial: confirmed = permanent #; pending = queue position; rejected = — */
+function displaySerialLabel(p){
+  if(p.status==='confirmed') return '#'+(p.serial||'—');
+  if(p.status==='pending'){
+    const idx = pendingPlayers().findIndex(x=>x.id===p.id);
+    return idx>=0 ? '#'+(idx+1) : '—';
+  }
+  return '—';
+}
+
+function renderAdminPlayers(){
+  const list = filteredPlayers();
+  const rows = list.map(p=>`
+    <tr>
+      <td>${p.photoUrl ? `<img class="thumb" src="${p.photoUrl}">` : ''}</td>
+      <td>${escapeHtml(p.name)}${p.role==='manager' ? ` <span class="pill pending" style="margin-left:6px;">Manager</span>` : ''}${p.teamName ? `<div class="page-sub" style="margin:4px 0 0;">${escapeHtml(p.teamName)}</div>` : ''}</td>
+      <td>${escapeHtml(p.role==='manager' ? 'Manager' : (p.position ? positionLabel(p.position) : '—'))}</td>
+      <td>${escapeHtml(p.phone||'')}</td>
+      <td>${p.paymentMethod==='online'?'Online':'Cash'}${typeof p.feeAmount==='number' ? `<div class="page-sub" style="margin:4px 0 0;">₹${p.feeAmount}</div>` : ''}</td>
+      <td>${p.receiptUrl ? `<a href="${p.receiptUrl}" target="_blank" rel="noopener" style="color:var(--amber);">View</a>` : (p.transactionId ? escapeHtml(p.transactionId) : '—')}</td>
+      <td><span class="pill ${p.status}">${p.status}</span></td>
+      <td>${displaySerialLabel(p)}</td>
+      <td>
+        <div class="row-actions">
+          ${p.status!=='confirmed' ? `<button class="btn btn-green small" onclick="approvePlayer('${p.id}')">Approve</button>` : ''}
+          ${p.status!=='rejected' ? `<button class="btn btn-outline small" onclick="rejectPlayer('${p.id}')">Reject</button>` : ''}
+          <button class="btn btn-outline small" onclick="openEditPlayer('${p.id}')">Edit</button>
+          <button class="btn btn-danger small" onclick="deletePlayerConfirm('${p.id}')">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  return `
+    <div class="toolbar">
+      <input type="text" placeholder="Search by name, phone, team or position…" value="${adminState.search}" oninput="onAdminSearch(this.value)">
+      <select onchange="onAdminFilter(this.value)">
+        <option value="all" ${adminState.statusFilter==='all'?'selected':''}>All Statuses</option>
+        <option value="pending" ${adminState.statusFilter==='pending'?'selected':''}>Pending</option>
+        <option value="confirmed" ${adminState.statusFilter==='confirmed'?'selected':''}>Confirmed</option>
+        <option value="rejected" ${adminState.statusFilter==='rejected'?'selected':''}>Rejected</option>
+      </select>
+    </div>
+    <div class="card table-scroll">
+      <table class="ptable">
+        <thead><tr><th></th><th>Name / Team</th><th>Role / Position</th><th>Phone</th><th>Payment</th><th>Receipt</th><th>Status</th><th>Serial</th><th>Actions</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="9" class="empty">No players match this filter.</td></tr>`}</tbody>
+      </table>
+    </div>`;
+}
+function onAdminSearch(v){ adminState.search=v; render(); document.querySelector('.toolbar input')?.focus(); }
+function onAdminFilter(v){ adminState.statusFilter=v; render(); }
+
+function maxConfirmedSerial(excludeId){
+  return players
+    .filter(p => p.status==='confirmed' && p.id!==excludeId)
+    .reduce((m,p)=>Math.max(m, Number(p.serial)||0), 0);
+}
+
+/** Re-assign confirmed players to #1, #2, #3… (fills gaps after deletes). */
+async function renumberConfirmedSerials(){
+  if(!db) return;
+  const confirmed = players
+    .filter(p => p.status==='confirmed')
+    .sort((a,b)=>(Number(a.serial)||0)-(Number(b.serial)||0) || (a.createdAt||0)-(b.createdAt||0));
+  const batch = db.batch();
+  confirmed.forEach((p,i)=>{
+    const serial = i+1;
+    if(Number(p.serial)!==serial){
+      batch.update(db.collection(PLAYERS_COLLECTION).doc(p.id), { serial });
+    }
+  });
+  batch.set(
+    db.collection(SETTINGS_PATH.collection).doc(SETTINGS_PATH.id),
+    { nextSerial: confirmed.length+1, updatedAt: Date.now() },
+    { merge:true }
+  );
+  await batch.commit();
+}
+
+async function approvePlayer(id){
+  if(!db) return;
+  try{
+    await db.runTransaction(async tx=>{
+      const settingsRef = db.collection(SETTINGS_PATH.collection).doc(SETTINGS_PATH.id);
+      const playerRef = db.collection(PLAYERS_COLLECTION).doc(id);
+      const pSnap = await tx.get(playerRef);
+      if(!pSnap.exists) return;
+      const pData = pSnap.data();
+      if(pData.status==='confirmed') return; // already confirmed, keep existing serial
+      // Next free number from live confirmed list (ignores stale counter after deletes)
+      const serial = maxConfirmedSerial(id) + 1;
+      tx.update(playerRef, { status:'confirmed', serial });
+      tx.set(settingsRef, { nextSerial: serial+1, updatedAt: Date.now() }, {merge:true});
+    });
+  }catch(e){ console.error(e); alert('Could not approve player — check Firestore rules.'); }
+}
+async function rejectPlayer(id){
+  if(!db) return;
+  try{
+    await db.collection(PLAYERS_COLLECTION).doc(id).update({status:'rejected', serial:null});
+    await renumberConfirmedSerials();
+  }
+  catch(e){ console.error(e); alert('Could not reject player.'); }
+}
+function deletePlayerConfirm(id){
+  if(!confirm('Delete this player permanently? This cannot be undone.')) return;
+  deletePlayer(id);
+}
+async function deletePlayer(id){
+  if(!db) return;
+  try{
+    const wasConfirmed = players.some(p=>p.id===id && p.status==='confirmed');
+    await db.collection(PLAYERS_COLLECTION).doc(id).delete();
+    players = players.filter(p=>p.id!==id);
+    if(wasConfirmed) await renumberConfirmedSerials();
+  }catch(e){ console.error(e); alert('Could not delete player.'); }
+}
+function openEditPlayer(id){
+  const p = players.find(x=>x.id===id);
+  if(!p) return;
+  adminState.editPlayer = { id, name:p.name, phone:p.phone, position:p.position||'', role:p.role==='manager'?'manager':'player', teamName:p.teamName||'' };
+  render();
+}
+function closeEditPlayer(){ adminState.editPlayer=null; render(); }
+async function saveEditPlayer(){
+  const ep = adminState.editPlayer;
+  const name = document.getElementById('editName').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const role = document.getElementById('editRole').value === 'manager' ? 'manager' : 'player';
+  const teamName = (document.getElementById('editTeamName')?.value || '').trim();
+  const positionRaw = document.getElementById('editPosition')?.value.trim() || '';
+  if(!name || !phone) return;
+  const existing = players.find(p=>p.id===ep.id);
+  let position = positionRaw;
+  if(role === 'manager'){
+    if(!teamName){ alert('Please enter a team name for managers.'); return; }
+    position = 'MGR';
+    const alreadyManager = existing && isManagerEntry(existing) && isCountedRegistration(existing);
+    if(!alreadyManager && !availableManagerSlots()){
+      alert(`Manager spots are full — only ${maxTeamSlots()} managers allowed (one per team).`);
+      return;
+    }
+  }else if(!position || !PLAYER_POSITIONS.some(p=>p.value===position)){
+    alert('Please select a playing position.');
+    return;
+  }else if(position === 'GK'){
+    const alreadyGk = existing && isGoalkeeperEntry(existing) && isCountedRegistration(existing);
+    if(!alreadyGk && !availableGoalkeeperSlots()){
+      alert(`Goalkeeper spots are full — only ${maxTeamSlots()} goalkeepers allowed (one per team).`);
+      return;
+    }
+  }
+  try{
+    await db.collection(PLAYERS_COLLECTION).doc(ep.id).update({
+      name, phone, position, role, teamName: role==='manager' ? teamName : ''
+    });
+    adminState.editPlayer=null; render();
+  }catch(e){ console.error(e); alert('Could not save changes.'); }
+}
+function renderEditPlayerModal(){
+  const ep = adminState.editPlayer;
+  const isManager = ep.role === 'manager';
+  return `
+    <div class="modal-backdrop" onclick="if(event.target===this)closeEditPlayer()">
+      <div class="modal-card">
+        <h2>Edit Registration</h2>
+        <div class="field"><label>Name</label><input type="text" id="editName" value="${String(ep.name||'').replace(/"/g,'&quot;')}"></div>
+        <div class="field"><label>Phone</label><input type="text" id="editPhone" value="${String(ep.phone||'').replace(/"/g,'&quot;')}"></div>
+        <div class="field">
+          <label>Role</label>
+          <select id="editRole" onchange="onEditRoleChange(this.value)">
+            <option value="player" ${!isManager?'selected':''}>Player</option>
+            <option value="manager" ${isManager?'selected':''}>Manager</option>
+          </select>
+        </div>
+        <div class="field" id="editTeamField" style="${isManager?'':'display:none;'}">
+          <label>Team Name</label>
+          <input type="text" id="editTeamName" value="${String(ep.teamName||'').replace(/"/g,'&quot;')}">
+        </div>
+        <div class="field" id="editPositionField" style="${isManager?'display:none;':''}">
+          <label>Playing Position</label>
+          <select id="editPosition">
+            <option value="" ${!ep.position || ep.position==='MGR'?'selected':''}>Select position</option>
+            ${PLAYER_POSITIONS.filter(Boolean).map(p=>`<option value="${p.value}" ${ep.position===p.value?'selected':''}>${p.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" onclick="closeEditPlayer()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveEditPlayer()">Save Changes</button>
+        </div>
+      </div>
+    </div>`;
+}
+function onEditRoleChange(role){
+  if(adminState.editPlayer) adminState.editPlayer.role = role === 'manager' ? 'manager' : 'player';
+  const teamField = document.getElementById('editTeamField');
+  const posField = document.getElementById('editPositionField');
+  if(teamField) teamField.style.display = role === 'manager' ? '' : 'none';
+  if(posField) posField.style.display = role === 'manager' ? 'none' : '';
+}
+
+function renderAdminSettings(){
+  const s = settings;
+  const msg = adminState.settingsMsg;
+  return `
+    <div class="card">
+      <h2>Tournament Settings</h2>
+      ${msg ? `<div class="form-msg ${msg.type==='ok'?'ok':'err'}">${msg.text}</div>` : ''}
+      <div class="settings-grid">
+        <div class="field"><label>Tournament Name</label><input type="text" id="setName" value="${String(s.name||'').replace(/"/g,'&quot;')}"><div class="hint">Main title on the home page hero.</div></div>
+        <div class="field"><label>Season / Edition</label><input type="text" id="setSeason" value="${String(s.seasonLabel||'').replace(/"/g,'&quot;')}" placeholder="e.g. 2026 or Season 7"><div class="hint">Shown under the name (year, season number, etc.). Leave blank to hide.</div></div>
+        <div class="field"><label>Registration Fee (₹)</label><input type="number" id="setFee" value="${s.fee}" min="0"><div class="hint">Player entry fee shown on register form.</div></div>
+        <div class="field"><label>Manager Fee (₹)</label><input type="number" id="setManagerFee" value="${managerFeeAmount()}" min="0"><div class="hint">Separate fee when someone registers as Manager.</div></div>
+        <div class="field"><label>Tournament Date</label><input type="date" id="setDate" value="${s.tournamentDate||''}"><div class="hint">Shown on the home page.</div></div>
+        <div class="field"><label>Tournament Time</label><input type="time" id="setTime" value="${s.tournamentTime||''}"><div class="hint">Start time shown on home.</div></div>
+        <div class="field"><label>Venue</label><input type="text" id="setVenue" value="${String(s.venue||'').replace(/"/g,'&quot;')}" placeholder="e.g. City Stadium Ground"><div class="hint">Location name shown on home.</div></div>
+        <div class="field"><label>Venue Map Link</label><input type="url" id="setVenueUrl" value="${String(s.venueUrl||'').replace(/"/g,'&quot;')}" placeholder="https://maps.google.com/…"><div class="hint">Google Maps / location URL. Makes the venue name clickable.</div></div>
+        <div class="field"><label>Number of Teams</label><input type="number" id="setTeams" value="${s.maxTeams||16}" min="1"><div class="hint">Shown on home. Also limits managers and goalkeepers to one per team.</div></div>
+        <div class="field"><label>Maximum Player Slots</label><input type="number" id="setMax" value="${s.maxSlots}" min="1"><div class="hint">Limits how many players can register.</div></div>
+        <div class="field"><label>Registration Closing Date</label><input type="date" id="setCloseDate" value="${s.registrationCloseDate||''}"><div class="hint">Shown as the official deadline on home. Leave blank for no auto-close.</div></div>
+        <div class="field"><label>Registration Closing Time</label><input type="time" id="setCloseTime" value="${s.registrationCloseTime||'23:59'}"><div class="hint">Default 11:59 PM if date is set.</div></div>
+      </div>
+      <div class="toggle-row">
+        <div>Registration Open <div class="sub">Turn off to stop new sign-ups immediately, even with slots free.</div></div>
+        <button class="switch ${s.registrationOpen?'on':''}" onclick="toggleRegistrationOpen()"></button>
+      </div>
+      <div class="toggle-row">
+        <div>Player Photo Required <div class="sub">When off, players can register without uploading a photo.</div></div>
+        <button class="switch ${s.photoRequired!==false?'on':''}" onclick="togglePhotoRequired()"></button>
+      </div>
+      <div class="toggle-row">
+        <div>Show Auction Desk <div class="sub">When off, the Auction Desk link is hidden from the public site.</div></div>
+        <button class="switch ${s.auctionDeskVisible!==false?'on':''}" onclick="toggleAuctionDeskVisible()"></button>
+      </div>
+      <div class="field">
+        <label>Payment QR Code</label>
+        <div class="qr-admin-card">
+          <div class="qr-admin-status ${currentQrUrl()?'ok':'warn'}">${currentQrUrl() ? (adminState.qrFile || adminState.qrUrlDraft ? 'New QR ready — Save Settings to publish' : 'Live on register form') : 'No QR published — players will not see a code'}</div>
+          ${currentQrUrl() ? `<img class="qr-admin-preview" src="${escapeHtml(currentQrUrl())}" alt="QR preview" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'hint',textContent:'Preview failed — URL may be invalid'}))">` : `<div class="hint" style="margin:0;">No QR selected yet.</div>`}
+          <div class="qr-admin-actions">
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('qrFile').click()">${currentQrUrl() ? 'Replace QR image' : 'Upload QR image'}</button>
+            ${currentQrUrl() ? `<button type="button" class="btn btn-outline" onclick="clearAdminQr()">Remove QR</button>` : ''}
+          </div>
+          <div class="photo-drop" onclick="document.getElementById('qrFile').click()" style="margin:0;">
+            <div style="font-size:13px; color:var(--chalk-dim);">${adminState.qrFile ? escapeHtml(adminState.qrFile.name) : 'Or tap here to choose a QR image (JPG/PNG)'}</div>
+          </div>
+          <input type="file" id="qrFile" accept="image/*" style="display:none">
+          <div class="field" style="margin:0;">
+            <label style="margin-top:4px;">Or paste QR image URL</label>
+            <input type="url" id="setQrUrl" value="${escapeHtml(adminState.qrUrlDraft!==null && adminState.qrUrlDraft!==undefined ? adminState.qrUrlDraft : (adminState.qrRemoved ? '' : (settings.qrUrl||'')))}" placeholder="https://…/upi-qr.png">
+            <div class="qr-admin-actions" style="margin-top:8px;">
+              <button type="button" class="btn btn-outline" onclick="useQrImageUrl()">Use this URL</button>
+            </div>
+            <div class="hint">Use this if Cloudinary upload fails. Must be a publicly reachable image link.</div>
+          </div>
+        </div>
+        <div class="hint">Shown on Register → Pay Online. After changing, click Save Settings.</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveAdminSettings()" style="margin-top:6px;">Save Settings</button>
+    </div>`;
+}
+async function toggleRegistrationOpen(){
+  try{
+    await saveSettings({registrationOpen: !settings.registrationOpen});
+    render();
+  }catch(e){
+    console.error(e);
+    alert('Could not update registration status. Check Firebase connection / Firestore rules.');
+  }
+}
+async function togglePhotoRequired(){
+  try{
+    await saveSettings({photoRequired: settings.photoRequired===false});
+    render();
+  }catch(e){
+    console.error(e);
+    alert('Could not update photo requirement. Check Firebase connection / Firestore rules.');
+  }
+}
+async function toggleAuctionDeskVisible(){
+  try{
+    await saveSettings({auctionDeskVisible: settings.auctionDeskVisible===false});
+    render();
+  }catch(e){
+    console.error(e);
+    alert('Could not update Auction Desk visibility. Check Firebase connection / Firestore rules.');
+  }
+}
+async function saveAdminSettings(){
+  const nameEl = document.getElementById('setName');
+  const seasonEl = document.getElementById('setSeason');
+  const feeEl = document.getElementById('setFee');
+  const managerFeeEl = document.getElementById('setManagerFee');
+  const maxEl = document.getElementById('setMax');
+  const dateEl = document.getElementById('setDate');
+  const timeEl = document.getElementById('setTime');
+  const venueEl = document.getElementById('setVenue');
+  const venueUrlEl = document.getElementById('setVenueUrl');
+  const teamsEl = document.getElementById('setTeams');
+  const closeDateEl = document.getElementById('setCloseDate');
+  const closeTimeEl = document.getElementById('setCloseTime');
+  if(!nameEl || !seasonEl || !feeEl || !managerFeeEl || !maxEl || !dateEl || !timeEl || !venueEl || !venueUrlEl || !teamsEl || !closeDateEl || !closeTimeEl) return;
+
+  const name = nameEl.value.trim() || settings.name;
+  const seasonLabel = seasonEl.value.trim();
+  const fee = Number(feeEl.value);
+  const managerFee = Number(managerFeeEl.value);
+  const maxSlots = Number(maxEl.value);
+  const maxTeams = Number(teamsEl.value);
+  const tournamentDate = dateEl.value || '';
+  const tournamentTime = timeEl.value || '';
+  const venue = venueEl.value.trim();
+  let venueUrl = venueUrlEl.value.trim();
+  if(venueUrl && !/^https?:\/\//i.test(venueUrl)) venueUrl = 'https://' + venueUrl;
+  const registrationCloseDate = closeDateEl.value || '';
+  const registrationCloseTime = closeTimeEl.value || (registrationCloseDate ? '23:59' : '');
+  if(!Number.isFinite(fee) || fee < 0){
+    adminState.settingsMsg = {type:'err', text:'Please enter a valid registration fee.'};
+    render(); return;
+  }
+  if(!Number.isFinite(managerFee) || managerFee < 0){
+    adminState.settingsMsg = {type:'err', text:'Please enter a valid manager fee.'};
+    render(); return;
+  }
+  if(!Number.isFinite(maxSlots) || maxSlots < 1){
+    adminState.settingsMsg = {type:'err', text:'Maximum player slots must be at least 1.'};
+    render(); return;
+  }
+  if(!Number.isFinite(maxTeams) || maxTeams < 1){
+    adminState.settingsMsg = {type:'err', text:'Number of teams must be at least 1.'};
+    render(); return;
+  }
+
+  let qrUrl = settings.qrUrl || '';
+  const qrUrlInput = document.getElementById('setQrUrl');
+  const pastedQr = qrUrlInput ? (qrUrlInput.value||'').trim() : '';
+  if(adminState.qrRemoved && !adminState.qrFile && !pastedQr && !(adminState.qrUrlDraft && String(adminState.qrUrlDraft).trim())){
+    qrUrl = '';
+  }else if(adminState.qrFile){
+    /* upload below */
+  }else if(pastedQr){
+    if(!/^https?:\/\//i.test(pastedQr)){
+      adminState.settingsMsg = {type:'err', text:'QR image URL must start with http:// or https://'};
+      render(); return;
+    }
+    qrUrl = pastedQr;
+  }else if(adminState.qrUrlDraft !== null && adminState.qrUrlDraft !== undefined){
+    qrUrl = String(adminState.qrUrlDraft).trim();
+  }
+  try{
+    if(adminState.qrFile){
+      qrUrl = await uploadToCloudinary(adminState.qrFile);
+    }
+    await saveSettings({name, seasonLabel, fee, managerFee, maxSlots, maxTeams, tournamentDate, tournamentTime, venue, venueUrl, qrUrl, registrationCloseDate, registrationCloseTime});
+    adminState.qrFile = null;
+    adminState.qrPreview = '';
+    adminState.qrUrlDraft = null;
+    adminState.qrRemoved = false;
+    adminState.settingsMsg = {type:'ok', text: qrUrl ? 'Settings saved. Payment QR is live on the Register page.' : 'Settings saved. No payment QR is set — Pay Online will show a missing-QR message.'};
+    render();
+  }catch(e){
+    console.error(e);
+    adminState.settingsMsg = {type:'err', text:(e && e.message) ? e.message : 'Could not save settings. Check Firebase / Cloudinary connection and Firestore write rules.'};
+    render();
+  }
+}
+
+function renderAdminStats(){
+  const confirmed = confirmedPlayers().length, pending = pendingPlayers().length, rejected = rejectedPlayers().length;
+  return `
+    <div class="grid-4">
+      <div class="stat-card"><div class="stat-label">Total Registrations</div><div class="stat-value">${players.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Confirmed</div><div class="stat-value green">${confirmed}</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value amber">${pending}</div></div>
+      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value red">${rejected}</div></div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h2>Export Registration List</h2>
+      <div class="page-sub" style="margin-bottom:14px;">PDF has two sections: managers (Role + Team, no Position) and players (Position, no Role). Confirmed entries use permanent serials; pending are numbered by queue order within each list. CSV / Excel follow the Players tab search &amp; filter.</div>
+      <div class="export-row">
+        <button class="btn btn-primary" onclick="exportPDF()">⬇ Download Full List (PDF)</button>
+        <button class="btn btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn btn-outline" onclick="exportExcel()">⬇ Export Excel</button>
+        <button class="btn btn-outline" onclick="fixSerialsClick()">Fix Serial Numbers</button>
+      </div>
+    </div>`;
+}
+async function fixSerialsClick(){
+  try{
+    await renumberConfirmedSerials();
+    alert('Confirmed players renumbered to #1, #2, #3…');
+  }catch(e){
+    console.error(e);
+    alert('Could not renumber serials. Check Firestore write rules.');
+  }
+}
+function exportRows(){
+  return filteredPlayers().map(p=>({
+    Name:p.name,
+    Role: roleLabel(p.role),
+    Team: p.teamName||'',
+    Position: p.role==='manager' ? 'Manager' : (p.position ? positionLabel(p.position) : ''),
+    Phone:p.phone,
+    Fee: typeof p.feeAmount==='number' ? p.feeAmount : '',
+    Payment:p.paymentMethod,
+    Receipt:p.receiptUrl||p.transactionId||'',
+    Status:p.status,
+    Serial:p.serial||''
+  }));
+}
+function playerToExportRow(p, pendingIndex){
+  let serialLabel = '—';
+  if(p.status==='confirmed'){
+    serialLabel = '#'+(p.serial||'—');
+  }else if(p.status==='pending' && typeof pendingIndex==='number'){
+    serialLabel = '#'+(pendingIndex+1);
+  }
+  const manager = isManagerEntry(p);
+  return {
+    Serial: serialLabel,
+    Name: p.name||'',
+    Role: roleLabel(manager ? 'manager' : (p.role||'player')),
+    Team: p.teamName||'—',
+    Position: manager ? '' : (p.position ? positionLabel(p.position) : '—'),
+    Phone: p.phone||'',
+    Payment: p.paymentMethod==='online' ? 'Online' : (p.paymentMethod==='cash' ? 'Cash' : (p.paymentMethod||'')),
+    Receipt: p.receiptUrl ? 'Yes' : (p.transactionId||'—'),
+    Status: p.status||''
+  };
+}
+function sortNotConfirmedExport(list){
+  return list.slice().sort((a,b)=>{
+    const order = {pending:0, rejected:1};
+    const ao = order[a.status] ?? 2, bo = order[b.status] ?? 2;
+    if(ao!==bo) return ao-bo;
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+}
+function pdfNextY(doc, minY){
+  let y = (doc.lastAutoTable?.finalY || 36) + 14;
+  if(y > (minY || 250)){ doc.addPage(); y = 20; }
+  return y;
+}
+function exportCSV(){
+  const rows = exportRows();
+  if(!rows.length) return alert('No players to export.');
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(',')].concat(rows.map(r=>headers.map(h=>`"${String(r[h]).replace(/"/g,'""')}"`).join(','))).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'players.csv'; a.click();
+}
+function exportExcel(){
+  const rows = exportRows();
+  if(!rows.length) return alert('No players to export.');
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Players');
+  XLSX.writeFile(wb, 'players.xlsx');
+}
+
+/** Load remote image as data-URL for jsPDF (Cloudinary URLs work with CORS). */
+function loadImageDataUrl(url){
+  if(!url) return Promise.resolve(null);
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=>{
+      try{
+        const canvas = document.createElement('canvas');
+        const maxW = 120, maxH = 140;
+        let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        const scale = Math.min(maxW/w, maxH/h, 1);
+        w = Math.max(1, Math.round(w*scale));
+        h = Math.max(1, Math.round(h*scale));
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      }catch(e){
+        console.warn('PDF photo canvas failed', e);
+        resolve(null);
+      }
+    };
+    img.onerror = ()=>resolve(null);
+    // Cache-bust helps some CDNs return CORS headers consistently
+    const sep = url.includes('?') ? '&' : '?';
+    img.src = url + sep + 'pdf=1';
+  });
+}
+
+function drawPdfPlayerTable(doc, list, photos, startY, headColor, pendingMode, kind){
+  const isManager = kind === 'manager';
+  const photoCol = isManager ? 6 : 5;
+  const emptyMsg = isManager ? 'No managers in this list' : 'No players in this list';
+  const head = isManager
+    ? [['Serial','Name','Role','Team','Phone','Payment','Photo','Status']]
+    : [['Serial','Name','Position','Phone','Payment','Photo','Status']];
+  const body = list.length
+    ? list.map((p,i)=>{
+        const pendingIdx = pendingMode && p.status==='pending'
+          ? list.slice(0, i+1).filter(x=>x.status==='pending').length - 1
+          : undefined;
+        const r = playerToExportRow(p, pendingIdx);
+        return isManager
+          ? [r.Serial, r.Name, r.Role, r.Team, r.Phone, r.Payment, '', r.Status]
+          : [r.Serial, r.Name, r.Position, r.Phone, r.Payment, '', r.Status];
+      })
+    : (isManager
+        ? [['—', emptyMsg, '—','—','—','—','','—']]
+        : [['—', emptyMsg, '—','—','—','','—']]);
+
+  doc.autoTable({
+    startY,
+    head,
+    body,
+    styles:{ fontSize:7, cellPadding:2, minCellHeight: list.length ? 22 : 10, valign:'middle' },
+    headStyles:{ fillColor: headColor },
+    columnStyles: isManager
+      ? {
+          0:{ cellWidth:14 },
+          1:{ cellWidth:32 },
+          2:{ cellWidth:22 },
+          3:{ cellWidth:30 },
+          4:{ cellWidth:26 },
+          5:{ cellWidth:18 },
+          6:{ cellWidth:16, halign:'center' },
+          7:{ cellWidth:20 }
+        }
+      : {
+          0:{ cellWidth:16 },
+          1:{ cellWidth:40 },
+          2:{ cellWidth:32 },
+          3:{ cellWidth:30 },
+          4:{ cellWidth:20 },
+          5:{ cellWidth:16, halign:'center' },
+          6:{ cellWidth:24 }
+        },
+    didDrawCell(data){
+      if(data.section!=='body' || data.column.index!==photoCol || !list.length) return;
+      const src = photos[data.row.index];
+      if(!src) return;
+      const pad = 2;
+      const iw = Math.min(14, data.cell.width - pad*2);
+      const ih = Math.min(18, data.cell.height - pad*2);
+      const x = data.cell.x + (data.cell.width - iw)/2;
+      const y = data.cell.y + (data.cell.height - ih)/2;
+      try{ doc.addImage(src, 'JPEG', x, y, iw, ih); }catch(e){ /* skip broken image */ }
+    }
+  });
+}
+
+async function exportPDF(){
+  const managers = players.filter(p=>isManagerEntry(p));
+  const fieldPlayers = players.filter(p=>!isManagerEntry(p));
+  const confirmedManagers = managers.filter(p=>p.status==='confirmed').sort((a,b)=>(a.serial||0)-(b.serial||0));
+  const notConfirmedManagers = sortNotConfirmedExport(managers.filter(p=>p.status!=='confirmed'));
+  const confirmedField = fieldPlayers.filter(p=>p.status==='confirmed').sort((a,b)=>(a.serial||0)-(b.serial||0));
+  const notConfirmedField = sortNotConfirmedExport(fieldPlayers.filter(p=>p.status!=='confirmed'));
+
+  if(!managers.length && !fieldPlayers.length) return alert('No players to export.');
+
+  const btn = document.querySelector('button[onclick="exportPDF()"]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
+
+  try{
+    const confirmedManagerPhotos = await Promise.all(confirmedManagers.map(p=>loadImageDataUrl(p.photoUrl)));
+    const pendingManagerPhotos = await Promise.all(notConfirmedManagers.map(p=>loadImageDataUrl(p.photoUrl)));
+    const confirmedPlayerPhotos = await Promise.all(confirmedField.map(p=>loadImageDataUrl(p.photoUrl)));
+    const pendingPlayerPhotos = await Promise.all(notConfirmedField.map(p=>loadImageDataUrl(p.photoUrl)));
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const green = [79,174,124];
+    const amber = [242,185,59];
+
+    doc.setFontSize(16);
+    doc.text(settings.name + ' — Registration List', 14, 16);
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(
+      'Generated ' + new Date().toLocaleString() +
+      '  ·  Managers: ' + managers.length +
+      '  ·  Players: ' + fieldPlayers.length,
+      14, 22
+    );
+    doc.setTextColor(0);
+
+    doc.setFontSize(13);
+    doc.text('Manager List', 14, 32);
+    doc.setFontSize(11);
+    doc.text('Confirmed Managers (' + confirmedManagers.length + ')', 14, 38);
+    drawPdfPlayerTable(doc, confirmedManagers, confirmedManagerPhotos, 42, green, false, 'manager');
+
+    let y = pdfNextY(doc);
+    doc.setFontSize(11);
+    doc.text('Not Confirmed — Pending & Rejected (' + notConfirmedManagers.length + ')', 14, y);
+    drawPdfPlayerTable(doc, notConfirmedManagers, pendingManagerPhotos, y + 4, amber, true, 'manager');
+
+    y = pdfNextY(doc, 220);
+    doc.setFontSize(13);
+    doc.text('Player List', 14, y);
+    doc.setFontSize(11);
+    doc.text('Confirmed Players (' + confirmedField.length + ')', 14, y + 8);
+    drawPdfPlayerTable(doc, confirmedField, confirmedPlayerPhotos, y + 12, green, false, 'player');
+
+    y = pdfNextY(doc);
+    doc.setFontSize(11);
+    doc.text('Not Confirmed — Pending & Rejected (' + notConfirmedField.length + ')', 14, y);
+    drawPdfPlayerTable(doc, notConfirmedField, pendingPlayerPhotos, y + 4, amber, true, 'player');
+
+    const safeName = (settings.name||'tournament').replace(/[^\w\-]+/g,'_').slice(0,40);
+    doc.save(safeName + '_registration_list.pdf');
+  }catch(e){
+    console.error(e);
+    alert('Could not generate PDF. Try again, or open this page via http (not file://) if photos fail to load.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '⬇ Download Full List (PDF)'; }
+  }
+}
+
+/* ============================================================
+   MASTER RENDER
+   ============================================================ */
+function render(){
+  try{
+    stopDeadlineTimer();
+    buildNav();
+    document.getElementById('brandName').textContent = settings.name;
+    document.getElementById('footText').textContent = '© ' + settings.name;
+    const seasonPart = String(settings.seasonLabel||'').trim();
+    document.title = seasonPart ? (settings.name + ' ' + seasonPart + ' Registration') : (settings.name + ' Registration');
+    const auctionLink = document.getElementById('auctionDeskLink');
+    if(auctionLink) auctionLink.style.display = settings.auctionDeskVisible===false ? 'none' : '';
+
+    const app = document.getElementById('app');
+    if(page==='home') app.innerHTML = renderHome();
+    else if(page==='register') app.innerHTML = renderRegister();
+    else if(page==='players') app.innerHTML = renderPublicPlayers();
+    else if(page==='admin') app.innerHTML = renderAdmin();
+
+    wireEvents();
+    if(page==='home') startDeadlineTimer();
+  }catch(e){
+    console.error('Render failed:', e);
+    const app = document.getElementById('app');
+    if(app){
+      app.innerHTML = `<div class="card"><div class="form-msg err">Something went wrong loading this page. Try refreshing. (${escapeHtml(e && e.message)})</div></div>`;
+    }
+  }
+}
+
+function wireEvents(){
+  const nameInput = document.getElementById('regName');
+  if(nameInput) nameInput.addEventListener('input', e=>{ regState.name = e.target.value; });
+  const phoneInput = document.getElementById('regPhone');
+  if(phoneInput) phoneInput.addEventListener('input', e=>{
+    const digits = e.target.value.replace(/\D/g,'').slice(0,10);
+    e.target.value = digits;
+    regState.phone = digits;
+  });
+  if(phoneInput) phoneInput.addEventListener('paste', e=>{
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+    let d = text.replace(/\D/g,'');
+    if(d.startsWith('91') && d.length>=12) d = d.slice(2);
+    if(d.startsWith('0') && d.length>=11) d = d.slice(1);
+    d = d.slice(0,10);
+    e.target.value = d;
+    regState.phone = d;
+  });
+  if(phoneInput) phoneInput.addEventListener('keydown', e=>{
+    const allow = ['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','Home','End'];
+    if(allow.includes(e.key) || e.ctrlKey || e.metaKey) return;
+    if(!/^\d$/.test(e.key)){ e.preventDefault(); return; }
+    if(phoneInput.value.length >= 10 && phoneInput.selectionStart === phoneInput.selectionEnd) e.preventDefault();
+  });
+  const posSelect = document.getElementById('regPosition');
+  if(posSelect) posSelect.addEventListener('change', e=>{
+    const next = e.target.value;
+    if(next === 'GK' && availableGoalkeeperSlots() <= 0){
+      e.target.value = '';
+      regState.position = '';
+      return;
+    }
+    regState.position = next;
+  });
+
+  const photoInput = document.getElementById('regPhoto');
+  if(photoInput) photoInput.addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    if(f.size > 5*1024*1024){ alert('Photo must be under 5MB.'); e.target.value=''; return; }
+    if(!f.type.startsWith('image/')){ alert('Please choose a JPG or PNG photo.'); e.target.value=''; return; }
+    syncRegFieldsFromDom();
+    const reader = new FileReader();
+    reader.onload = ev=> openPhotoCrop(ev.target.result);
+    reader.readAsDataURL(f);
+    e.target.value = '';
+  });
+
+  const receiptInput = document.getElementById('regReceipt');
+  if(receiptInput) receiptInput.addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    if(f.size > 5*1024*1024){ alert('Receipt must be under 5MB.'); return; }
+    syncRegFieldsFromDom();
+    regState.receiptFile = f;
+    if(f.type.startsWith('image/')){
+      const reader = new FileReader();
+      reader.onload = ev=>{ regState.receiptPreview = ev.target.result; render(); };
+      reader.readAsDataURL(f);
+    }else{
+      regState.receiptPreview = '';
+      render();
+    }
+  });
+
+  document.querySelectorAll('.role-opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      if(el.classList.contains('disabled')) return;
+      syncRegFieldsFromDom();
+      const next = el.dataset.role === 'manager' ? 'manager' : 'player';
+      if(next === 'manager' && availableManagerSlots() <= 0) return;
+      if(regState.role !== next){
+        regState.role = next;
+        if(next === 'manager') regState.position = '';
+        else regState.teamName = '';
+      }
+      render();
+    });
+  });
+  const teamInput = document.getElementById('regTeamName');
+  if(teamInput) teamInput.addEventListener('input', e=>{ regState.teamName = e.target.value; });
+
+  document.querySelectorAll('.pay-opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      syncRegFieldsFromDom();
+      regState.method = el.dataset.method;
+      render();
+    });
+  });
+  const regBtn = document.getElementById('regSubmitBtn');
+  if(regBtn) regBtn.addEventListener('click', submitRegistration);
+
+  const loginForm = document.getElementById('adminLoginForm');
+  if(loginForm){
+    const pinInput = document.getElementById('adminPin');
+    if(pinInput) pinInput.focus();
+    loginForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const p = (pinInput?.value || '').trim();
+      if(p === EDIT_PIN){
+        editMode = true;
+        adminState.loginErr = '';
+        render();
+      }else{
+        adminState.loginErr = 'Incorrect PIN.';
+        render();
+      }
+    });
+  }
+
+  const qrFileInput = document.getElementById('qrFile');
+  if(qrFileInput) qrFileInput.addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    if(f.size > 5 * 1024 * 1024){
+      adminState.settingsMsg = {type:'err', text:'QR image must be under 5MB.'};
+      render();
+      return;
+    }
+    adminState.qrFile = f;
+    adminState.qrRemoved = false;
+    adminState.qrUrlDraft = null;
+    const reader = new FileReader();
+    reader.onload = ev=>{ adminState.qrPreview = ev.target.result; adminState.settingsMsg = {type:'ok', text:'New QR selected — click Save Settings to publish it.'}; render(); };
+    reader.readAsDataURL(f);
+  });
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  if(photoCrop.open){ closePhotoCrop(); return; }
+  if(adminState.editPlayer) closeEditPlayer();
+});
+
+initFirebase();
+render();
+</script>
+</body>
+</html>

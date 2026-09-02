@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tournament Auction Desk</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+:root{
+  --bg:#0A0E16; --panel:#111C2A; --panel-soft:#0E1826; --line:#22303F;
+  --chalk:#F3EFE4; --chalk-dim:#8C99A6;
+  --amber:#F2B93B; --amber-soft:rgba(242,185,59,0.14);
+  --green:#4FAE7C; --green-soft:rgba(79,174,124,0.14);
+  --red:#D9564C; --red-soft:rgba(217,86,76,0.14);
+  --blue:#5B8DEF; --blue-soft:rgba(91,141,239,0.14);
+  --turf:#143229; --turf-edge:#1E4A3C;
+  --radius:12px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:radial-gradient(1100px 500px at 50% -8%, #14243A 0%, transparent 60%), linear-gradient(180deg, var(--bg), #070B12 90%);
+  color:var(--chalk); font-family:'Inter',sans-serif; min-height:100vh;
+}
+.wrap{max-width:1280px; margin:0 auto; padding:0 16px 60px;}
+a{color:inherit;} button{font-family:inherit;} input,select,textarea{font-family:inherit;}
+.topbar{display:flex; align-items:center; justify-content:space-between; max-width:1280px; margin:0 auto; padding:16px; border-bottom:1px solid var(--line); gap:12px; flex-wrap:wrap;}
+.brand{display:flex; align-items:center; gap:12px; cursor:pointer;}
+.brand-icon{width:40px; height:40px; border-radius:8px; background:rgba(10,14,22,0.55); border:1px solid rgba(242,185,59,0.4); display:flex; align-items:center; justify-content:center; overflow:hidden;}
+.brand-icon img{width:100%; height:100%; object-fit:contain; display:block;}
+.brand-name{font-family:'Teko',sans-serif; font-weight:700; font-size:22px; text-transform:uppercase; line-height:1;}
+.brand-sub{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em; color:var(--amber); text-transform:uppercase; margin-top:3px;}
+.nav-links{display:flex; gap:8px; flex-wrap:wrap;}
+.nav-links button,.admin-tab{
+  background:var(--panel); border:1px solid var(--line); color:var(--chalk-dim);
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  padding:8px 12px; border-radius:999px; cursor:pointer;
+}
+.nav-links button.active,.admin-tab.active{background:var(--amber-soft); border-color:var(--amber); color:var(--amber);}
+.hamburger{display:none; background:none; border:1px solid var(--line); color:var(--chalk); font-size:16px; border-radius:6px; padding:6px 10px; cursor:pointer;}
+.mobile-nav{display:none; flex-direction:column; gap:2px; padding:0 16px 14px;}
+.mobile-nav.open{display:flex;}
+.mobile-nav button{background:var(--panel); border:1px solid var(--line); color:var(--chalk-dim); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; text-align:left; padding:11px 14px; border-radius:7px; cursor:pointer;}
+.mobile-nav button.active{color:var(--amber); border-color:var(--amber); background:var(--amber-soft);}
+@media(max-width:860px){.nav-links{display:none;} .hamburger{display:block;}}
+
+.page-title{font-family:'Teko',sans-serif; font-weight:700; font-size:34px; text-transform:uppercase; margin:24px 0 4px;}
+.page-sub{color:var(--chalk-dim); font-size:13.5px; margin-bottom:18px; line-height:1.5;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px;}
+.card h2{font-family:'Teko',sans-serif; font-size:20px; letter-spacing:0.03em; text-transform:uppercase; margin:0 0 14px; color:var(--amber); font-weight:600;}
+.btn{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; padding:11px 16px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid var(--line); background:transparent; color:var(--chalk);}
+.btn-primary{background:var(--amber); color:#241A03; border-color:var(--amber); font-weight:700;}
+.btn-green{background:var(--green-soft); border-color:var(--green); color:var(--green);}
+.btn-danger{background:var(--red-soft); border-color:var(--red); color:var(--red);}
+.btn-blue{background:var(--blue-soft); border-color:var(--blue); color:var(--blue);}
+.btn:disabled{opacity:0.4; cursor:not-allowed;}
+.btn.small{padding:7px 11px; font-size:10px;}
+.btn.xl{padding:14px 18px; font-size:13px;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--chalk-dim); margin-bottom:7px;}
+.field input,.field select,.field textarea{
+  width:100%; background:var(--panel-soft); border:1px solid var(--line); color:var(--chalk); border-radius:8px; padding:11px 13px; font-size:14px;
+}
+.field textarea{min-height:80px; resize:vertical;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none; border-color:var(--amber);}
+.field .hint{font-size:11px; color:var(--chalk-dim); margin-top:6px; line-height:1.4;}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:0 14px;}
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+.grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+@media(max-width:900px){.grid-4{grid-template-columns:1fr 1fr;} .grid-3{grid-template-columns:1fr;}}
+@media(max-width:640px){.grid-2,.grid-4{grid-template-columns:1fr;}}
+.manager-home-grid{
+  display:grid;
+  gap:14px;
+}
+.manager-home-card{
+  text-align:center;
+  background:var(--panel-soft);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 10px 12px;
+}
+.manager-home-card img,.manager-home-card .av{
+  width:86px; height:98px; border-radius:10px; object-fit:cover;
+  margin:0 auto 10px; display:block; background:var(--turf);
+  border:2px solid rgba(242,185,59,0.35);
+}
+.manager-home-card .av{
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Teko',sans-serif; font-size:32px; color:var(--amber);
+}
+.manager-home-card .team{
+  font-family:'Teko',sans-serif; font-size:20px; text-transform:uppercase; line-height:1.05; margin:0;
+}
+.manager-home-card .mgr{
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--chalk-dim); margin-top:6px;
+}
+@media(max-width:760px){
+  .manager-home-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+}
+.stat-card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px;}
+.stat-label{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--chalk-dim);}
+.stat-value{font-family:'Teko',sans-serif; font-size:32px; font-weight:700; line-height:1; margin-top:6px;}
+.stat-value.amber{color:var(--amber);} .stat-value.green{color:var(--green);} .stat-value.red{color:var(--red);}
+.facts-row{
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0;
+  margin:18px 0 4px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--panel);
+}
+.fact-cell{padding:16px 18px; border-right:1px solid var(--line);}
+.fact-cell:last-child{border-right:none;}
+.fact-cell .meta-label{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--chalk-dim); margin-bottom:8px;}
+.fact-cell .meta-value{font-size:15px; font-weight:600; color:var(--chalk); line-height:1.35; word-break:break-word;}
+.fact-cell .meta-value.accent{color:var(--amber); font-family:'Teko',sans-serif; font-size:28px; font-weight:700; line-height:1;}
+.fact-cell .meta-value a.venue-link{
+  color:var(--chalk);
+  text-decoration:none;
+  display:inline-block;
+  transition:color .15s;
+}
+.fact-cell .meta-value a.venue-link:hover{
+  color:var(--amber);
+}
+.fact-cell .venue-hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--chalk-dim);
+  margin-top:6px;
+  transition:color .15s;
+}
+.fact-cell .meta-value a.venue-link:hover .venue-hint{color:var(--amber);}
+@media(max-width:760px){.facts-row{grid-template-columns:1fr 1fr;} .fact-cell:nth-child(2n){border-right:none;} .fact-cell:nth-child(n+3){border-top:1px solid var(--line);}}
+@media(max-width:420px){.facts-row{grid-template-columns:1fr;} .fact-cell{border-right:none !important;} .fact-cell:not(:first-child){border-top:1px solid var(--line);}}
+
+.hero{
+  margin-top:26px;
+  padding:36px 32px 30px;
+  border-radius:16px;
+  background:
+    radial-gradient(700px 280px at 90% 0%, rgba(242,185,59,0.08), transparent 55%),
+    linear-gradient(160deg,#0F2A22 0%, #0B1826 72%);
+  border:1px solid var(--turf-edge);
+  position:relative;
+  overflow:hidden;
+}
+.hero-top{display:flex; align-items:flex-start; justify-content:space-between; gap:28px;}
+.hero-copy{flex:1; min-width:0;}
+.hero-logo{
+  flex:0 0 160px; width:160px; height:160px; border-radius:50%;
+  border:2px solid rgba(242,185,59,0.35); background:rgba(10,14,22,0.35);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  box-shadow:0 0 0 6px rgba(242,185,59,0.06);
+}
+.hero-logo img{width:100%; height:100%; object-fit:contain; display:block;}
+.hero-eyebrow{
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.22em;
+  text-transform:uppercase; color:var(--amber); margin-bottom:10px;
+}
+.hero h1{
+  font-family:'Teko',sans-serif; font-weight:700; text-transform:uppercase;
+  font-size:clamp(40px,7.5vw,62px); line-height:0.92; margin:0;
+}
+.hero h1 .hero-title-name{display:block;}
+.hero h1 .hero-year{display:block; color:var(--amber); margin-top:2px;}
+.hero-lead{color:var(--chalk-dim); max-width:480px; font-size:14.5px; line-height:1.6; margin:14px 0 0;}
+.hero .facts-row{
+  margin-top:28px; margin-bottom:0; border-radius:0; background:transparent;
+  border-left:none; border-right:none; border-color:rgba(30,74,60,0.7);
+}
+.hero .fact-cell{border-right-color:rgba(34,48,63,0.9);}
+@media(max-width:760px){
+  .hero{padding:28px 20px 24px;}
+  .hero-top{flex-direction:column-reverse; align-items:center; text-align:center;}
+  .hero-copy{width:100%;}
+  .hero-lead{margin-left:auto; margin-right:auto;}
+  .hero-logo{flex-basis:120px; width:120px; height:120px;}
+}
+.form-msg{padding:12px 14px; border-radius:8px; font-size:13px; margin-bottom:14px;}
+.form-msg.err{background:var(--red-soft); border:1px solid var(--red); color:#F7B5AF;}
+.form-msg.ok{background:var(--green-soft); border:1px solid var(--green); color:#B7E6CB;}
+.pill{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; padding:3px 8px; border-radius:999px; display:inline-block;}
+.pill.pending{background:var(--amber-soft); color:var(--amber);}
+.pill.confirmed{background:var(--green-soft); color:var(--green);}
+.pill.sold{background:var(--green-soft); color:var(--green);}
+.pill.unsold{background:var(--red-soft); color:var(--red);}
+.pill.pool{background:var(--blue-soft); color:var(--blue);}
+.pill.icon{background:var(--amber-soft); color:var(--amber);}
+.empty{padding:20px; text-align:center; color:var(--chalk-dim); font-size:13px;}
+.table-scroll{overflow-x:auto;}
+.ptable{width:100%; border-collapse:collapse; font-size:12.5px;}
+.ptable th{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.06em; color:var(--chalk-dim); text-transform:uppercase; text-align:left; padding:8px; border-bottom:1px solid var(--line); white-space:nowrap;}
+.ptable td{padding:9px 8px; border-bottom:1px solid rgba(34,48,63,0.6); vertical-align:middle;}
+.ptable img.thumb,.thumb{width:36px; height:42px; border-radius:8px; object-fit:cover; border:1px solid var(--turf-edge);}
+.avatar-fallback{width:36px; height:42px; border-radius:8px; background:var(--turf); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:12px; border:1px solid var(--turf-edge);}
+.row-actions{display:flex; gap:6px; flex-wrap:wrap;}
+.team-card{background:var(--panel-soft); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px;}
+.team-card-head{display:flex; gap:12px; align-items:center; margin-bottom:12px;}
+.team-logo{width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid rgba(242,185,59,0.35); background:#0A0E16;}
+.team-logo.placeholder{display:flex; align-items:center; justify-content:center; font-family:'Teko',sans-serif; font-size:22px; color:var(--amber);}
+.photo-drop{border:1.5px dashed var(--line); border-radius:10px; padding:14px; text-align:center; cursor:pointer; background:var(--panel-soft); font-size:12px; color:var(--chalk-dim);}
+.photo-drop:hover{border-color:var(--amber);}
+.fb-status{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--chalk-dim);}
+.fb-status.ok{color:var(--green);} .fb-status.err{color:var(--red);} .fb-status.wait{color:var(--amber);}
+footer{display:flex; align-items:center; justify-content:space-between; padding:22px 4px 10px; border-top:1px solid var(--line); margin-top:36px; flex-wrap:wrap; gap:10px;}
+.foot-text{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; color:var(--chalk-dim); text-transform:uppercase;}
+.login-shell{max-width:380px; margin:50px auto; padding:28px; background:var(--panel); border:1px solid var(--line); border-radius:16px;}
+.login-shell h2{font-family:'Teko',sans-serif; font-size:26px; text-transform:uppercase; margin:0 0 18px; text-align:center;}
+
+/* Auction dashboard — projector-first */
+.auction-shell{display:grid; grid-template-columns:1.4fr 1fr; gap:16px; align-items:start;}
+@media(max-width:980px){.auction-shell{grid-template-columns:1fr;}}
+.player-stage{
+  background:
+    radial-gradient(600px 280px at 50% 0%, rgba(242,185,59,0.1), transparent 55%),
+    linear-gradient(160deg,#0F2A22 0%, #0B1826 72%);
+  border:1px solid var(--turf-edge); border-radius:18px; padding:22px; text-align:center; min-height:420px;
+}
+.stage-photo{
+  width:min(220px,42vw); height:min(260px,50vw); margin:0 auto 14px; border-radius:16px; object-fit:cover;
+  border:3px solid rgba(242,185,59,0.4); background:var(--panel-soft); display:block;
+}
+.stage-photo.fallback{
+  display:flex; align-items:center; justify-content:center; font-family:'Teko',sans-serif; font-size:72px; color:var(--amber);
+}
+.stage-name{font-family:'Teko',sans-serif; font-weight:700; font-size:clamp(36px,6vw,56px); text-transform:uppercase; line-height:0.95; margin:0;}
+.stage-meta{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--chalk-dim); letter-spacing:0.08em; text-transform:uppercase; margin-top:8px;}
+.bid-hero{margin:18px 0 8px;}
+.bid-label{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--chalk-dim);}
+.bid-amount{font-family:'Teko',sans-serif; font-weight:700; font-size:clamp(72px,14vw,120px); line-height:0.9; color:var(--amber); margin:4px 0;}
+.bid-team{font-family:'Teko',sans-serif; font-size:28px; text-transform:uppercase; color:var(--green); min-height:34px;}
+.auction-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px;}
+@media(max-width:640px){.auction-stats{grid-template-columns:1fr 1fr;}}
+.mini-stat{background:rgba(10,14,22,0.45); border:1px solid var(--line); border-radius:10px; padding:10px;}
+.mini-stat .l{font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.12em; text-transform:uppercase; color:var(--chalk-dim);}
+.mini-stat .v{font-family:'Teko',sans-serif; font-size:26px; font-weight:700; margin-top:2px;}
+.controls{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; justify-content:center;}
+.inc-row{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:10px;}
+.team-budget-grid{display:grid; grid-template-columns:1fr; gap:8px;}
+.tb-row{
+  display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
+  background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; cursor:pointer;
+}
+.tb-row.active{border-color:var(--amber); background:var(--amber-soft);}
+.tb-row.broke{opacity:0.45;}
+.tb-logo{width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid var(--line);}
+.tb-name{font-family:'Teko',sans-serif; font-size:18px; text-transform:uppercase; line-height:1;}
+.tb-sub{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--chalk-dim); margin-top:3px;}
+.tb-budget{font-family:'Teko',sans-serif; font-size:24px; color:var(--amber); text-align:right;}
+.history-list{max-height:280px; overflow:auto; font-size:12px;}
+.history-item{padding:8px 0; border-bottom:1px solid rgba(34,48,63,0.5); color:var(--chalk-dim);}
+.history-item strong{color:var(--chalk);}
+
+/* Team page / poster */
+.poster{
+  width:420px; max-width:100%; margin:0 auto; background:linear-gradient(165deg,#102018,#0B1522 60%,#0A0E16);
+  border:1px solid var(--turf-edge); border-radius:16px; padding:22px; color:var(--chalk);
+}
+.poster-top{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px;}
+.poster-comp{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber);}
+.poster-team{font-family:'Teko',sans-serif; font-size:36px; text-transform:uppercase; line-height:0.95; margin:8px 0;}
+.poster-meta{font-size:12px; color:var(--chalk-dim); line-height:1.55;}
+.poster-players{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+.poster-player{background:rgba(10,14,22,0.5); border:1px solid var(--line); border-radius:10px; padding:8px; display:flex; gap:8px; align-items:center;}
+.poster-player img,.poster-player .av{width:34px; height:40px; border-radius:6px; object-fit:cover; background:var(--turf); display:flex; align-items:center; justify-content:center; font-size:12px;}
+.poster-player .nm{font-family:'Teko',sans-serif; font-size:15px; text-transform:uppercase; line-height:1;}
+.poster-player .pr{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--amber);}
+.poster-manager{
+  display:flex; gap:12px; align-items:center;
+  margin:4px 0 14px; padding:10px 12px;
+  background:rgba(10,14,22,0.5); border:1px solid var(--line); border-radius:12px;
+}
+.poster-manager img,.poster-manager .av{
+  width:56px; height:64px; border-radius:8px; object-fit:cover; background:var(--turf);
+  display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+  border:2px solid rgba(242,185,59,0.35);
+}
+.poster-manager .role{
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.16em;
+  text-transform:uppercase; color:var(--amber); margin-bottom:4px;
+}
+.poster-manager .nm{font-family:'Teko',sans-serif; font-size:24px; text-transform:uppercase; line-height:1;}
+.poster-manager .sub{font-size:12px; color:var(--chalk-dim); margin-top:4px; line-height:1.4;}
+.poster-player.icon{
+  grid-column:1 / -1;
+  border-color:var(--amber);
+  background:rgba(242,185,59,0.12);
+  box-shadow:0 0 0 1px rgba(242,185,59,0.35);
+  padding:12px;
+}
+.poster-player.icon img,.poster-player.icon .av{
+  width:52px; height:60px; border:2px solid var(--amber);
+}
+.poster-player.icon .nm{font-size:20px;}
+.poster-player .icon-tag{
+  display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px;
+  background:var(--amber); color:#241A03; font-family:'JetBrains Mono',monospace;
+  font-size:8px; letter-spacing:0.12em; vertical-align:middle;
+}
+.export-row{display:flex; gap:8px; flex-wrap:wrap;}
+.admin-tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+.spinner{width:16px; height:16px; border-radius:50%; border:2px solid rgba(242,185,59,0.3); border-top-color:var(--amber); animation:spin .7s linear infinite; display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.locked-note{font-size:12px; color:var(--chalk-dim); margin-top:8px;}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand" onclick="navigate('home')">
+    <div class="brand-icon"><img src="titans-super-cup-logo.png" alt="Titans Super Cup"></div>
+    <div>
+      <div class="brand-name" id="brandName">Auction Desk</div>
+      <div class="brand-sub">LIVE PLAYER AUCTION</div>
+    </div>
+  </div>
+  <div class="nav-links" id="navLinks"></div>
+  <button class="hamburger" id="hamburgerBtn">☰</button>
+</div>
+<div class="mobile-nav" id="mobileNav"></div>
+<div class="wrap">
+  <main id="app"></main>
+  <footer>
+    <div>
+      <div class="foot-text" id="footText">© Auction Desk</div>
+      <div class="fb-status wait" id="fbStatus">Connecting to Firebase…</div>
+    </div>
+    <a class="btn small" href="tournament-registration.html">← Registration</a>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   SHARED FIREBASE — same project as tournament-registration.html
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyB79Gf7ygpXTzHURxOHnxA5uUs17jaHagQ",
+  authDomain: "footballtournament-22b07.firebaseapp.com",
+  projectId: "footballtournament-22b07",
+  storageBucket: "footballtournament-22b07.firebasestorage.app",
+  messagingSenderId: "828377364621",
+  appId: "1:828377364621:web:17aa8edcf9179d95b10ac4"
+};
+const PLAYERS_COLLECTION = 'players';
+const SETTINGS_PATH = { collection:'config', id:'tournament' };
+const AUCTION_PATH = { collection:'config', id:'auction' };
+const EDIT_PIN = "2580";
+const CLOUDINARY = { cloudName:'kxhnbi19', uploadPreset:'tournament_unsigned' };
+const TOURNAMENT_LOGO = 'titans-super-cup-logo.png';
+
+const POSITION_LABELS = { GK:'Goalkeeper (GK)', DF:'Defender (DF)', MF:'Midfielder (MF)', FW:'Forward (FW)' };
+function positionLabel(c){ return POSITION_LABELS[c] || c || '—'; }
+
+let db = null;
+let page = 'home';
+let unlocked = false;
+let registeredPlayers = []; // from registration (confirmed preferred)
+let tournamentSettings = { name:'Tournament', seasonLabel:'2026', logoUrl:'', maxTeams:8, tournamentDate:'', tournamentTime:'', venue:'', venueUrl:'', auctionDeskVisible:true };
+let auction = defaultAuction();
+let ui = {
+  msg:null, loginErr:'', setupBusy:false, selectedTeamId:null, customInc:'',
+  posterTeamId:null, teamPageId:null
+};
+
+function defaultAuction(){
+  return {
+    competitionName:'',
+    tournamentLogoUrl:'',
+    auctioneerName:'',
+    basePrice:20,
+    defaultBudget:1000,
+    maxSquadSize:7,
+    status:'setup', // setup | running | completed
+    teams:[],
+    pool:[],          // player ids still available
+    order:[],         // auction order of player ids
+    cursor:0,         // index in order for current/next
+    currentPlayerId:null,
+    currentBid:20,
+    currentTeamId:null,
+    bidStarted:false,
+    sold:[],          // {playerId, teamId, price, at}
+    unsold:[],        // {playerId, at}
+    skipped:[],
+    history:[],
+    undoStack:[],
+    updatedAt:0
+  };
+}
+
+function escapeHtml(str){
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatTournamentDate(raw){
+  if(!raw) return '';
+  const d = new Date(raw + 'T00:00:00');
+  if(isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+}
+function formatTournamentTime(raw){
+  if(!raw) return '';
+  const parts = String(raw).split(':');
+  if(parts.length < 2) return raw;
+  const h = Number(parts[0]), m = Number(parts[1]);
+  if(!Number.isFinite(h) || !Number.isFinite(m)) return raw;
+  const d = new Date(); d.setHours(h, m, 0, 0);
+  return d.toLocaleTimeString('en-IN', { hour:'numeric', minute:'2-digit' });
+}
+function tournamentFactsHtml(){
+  const dateStr = formatTournamentDate(tournamentSettings.tournamentDate) || 'To be announced';
+  const timeStr = formatTournamentTime(tournamentSettings.tournamentTime) || 'To be announced';
+  const venue = String(tournamentSettings.venue||'').trim() || 'To be announced';
+  const venueUrl = String(tournamentSettings.venueUrl||'').trim();
+  const teams = Number(tournamentSettings.maxTeams) || 0;
+  const venueHtml = venueUrl
+    ? `<a class="venue-link" href="${escapeHtml(venueUrl)}" target="_blank" rel="noopener noreferrer"><span class="venue-name">${escapeHtml(venue)}</span><div class="venue-hint">Click for location →</div></a>`
+    : escapeHtml(venue);
+  return `
+    <div class="facts-row">
+      <div class="fact-cell"><div class="meta-label">Date</div><div class="meta-value">${escapeHtml(dateStr)}</div></div>
+      <div class="fact-cell"><div class="meta-label">Time</div><div class="meta-value">${escapeHtml(timeStr)}</div></div>
+      <div class="fact-cell"><div class="meta-label">Venue</div><div class="meta-value">${venueHtml}</div></div>
+      <div class="fact-cell"><div class="meta-label">Teams</div><div class="meta-value accent">${teams > 0 ? teams : '—'}</div></div>
+    </div>`;
+}
+function rupee(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
+function uid(){ return 't_' + Math.random().toString(36).slice(2,10); }
+function setFbStatus(text, cls){
+  const el = document.getElementById('fbStatus');
+  if(!el) return;
+  el.textContent = text; el.className = 'fb-status ' + (cls||'');
+}
+function initials(n){ return (n||'?').trim().charAt(0).toUpperCase(); }
+function photoHtml(url, name, cls){
+  if(url) return `<img class="${cls||'thumb'}" src="${escapeHtml(url)}" alt="">`;
+  return `<div class="${cls||'avatar-fallback'}">${initials(name)}</div>`;
+}
+
+async function uploadToCloudinary(file){
+  const form = new FormData();
+  form.append('file', file);
+  form.append('upload_preset', CLOUDINARY.uploadPreset);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/auto/upload`, { method:'POST', body:form });
+  const data = await res.json();
+  if(!res.ok || !data.secure_url) throw new Error(data.error?.message || 'Upload failed');
+  return data.secure_url;
+}
+
+/* ---------- Firebase ---------- */
+function initFirebase(){
+  if(!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith('YOUR_')){
+    setFbStatus('Paste Firebase config', 'err'); render(); return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    setFbStatus('Connected', 'ok');
+    listenTournament();
+    listenPlayers();
+    listenAuction();
+  }catch(e){
+    console.error(e);
+    setFbStatus('Firebase init failed', 'err');
+    render();
+  }
+}
+function listenTournament(){
+  db.collection(SETTINGS_PATH.collection).doc(SETTINGS_PATH.id).onSnapshot(snap=>{
+    if(snap.exists) tournamentSettings = Object.assign(tournamentSettings, snap.data());
+    if(auction.status==='setup' && !auction.competitionName){
+      auction.competitionName = tournamentSettings.name || '';
+      auction.tournamentLogoUrl = tournamentSettings.logoUrl || '';
+    }
+    render();
+  }, err=>{ console.error(err); setFbStatus('Settings listen failed','err'); });
+}
+function listenPlayers(){
+  db.collection(PLAYERS_COLLECTION).onSnapshot(snap=>{
+    registeredPlayers = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+    render();
+  }, err=>{ console.error(err); setFbStatus('Players listen failed','err'); });
+}
+function listenAuction(){
+  db.collection(AUCTION_PATH.collection).doc(AUCTION_PATH.id).onSnapshot(snap=>{
+    if(snap.exists){
+      auction = Object.assign(defaultAuction(), snap.data());
+      if(!Array.isArray(auction.teams)) auction.teams = [];
+      if(!Array.isArray(auction.history)) auction.history = [];
+      if(!Array.isArray(auction.undoStack)) auction.undoStack = [];
+    }
+    render();
+  }, err=>{ console.error(err); setFbStatus('Auction listen failed — check Firestore rules','err'); });
+}
+async function persistAuction(extra){
+  if(!db) throw new Error('Not connected');
+  const payload = Object.assign({}, auction, extra||{}, { updatedAt: Date.now() });
+  // keep undo stack reasonable
+  if(payload.undoStack && payload.undoStack.length > 40) payload.undoStack = payload.undoStack.slice(-40);
+  if(payload.history && payload.history.length > 500) payload.history = payload.history.slice(-500);
+  auction = payload;
+  await db.collection(AUCTION_PATH.collection).doc(AUCTION_PATH.id).set(payload, { merge:false });
+}
+
+/* ---------- Player helpers ---------- */
+function confirmedPlayers(){
+  return registeredPlayers
+    .filter(p => p.status==='confirmed')
+    .sort((a,b)=>(a.serial||0)-(b.serial||0) || (a.createdAt||0)-(b.createdAt||0));
+}
+function isManagerEntry(p){ return p && (p.role==='manager' || p.position==='MGR'); }
+function registeredManagers(){
+  return registeredPlayers
+    .filter(p => isManagerEntry(p) && (p.status==='pending' || p.status==='confirmed'))
+    .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+}
+function teamManagerRecord(t){
+  if(!t) return null;
+  if(t.managerPlayerId){
+    const p = playerById(t.managerPlayerId);
+    if(p) return p;
+  }
+  const mgrs = registeredManagers();
+  const teamName = String(t.name||'').trim().toLowerCase();
+  if(teamName){
+    const byTeam = mgrs.find(m => String(m.teamName||'').trim().toLowerCase() === teamName);
+    if(byTeam) return byTeam;
+  }
+  const mgrName = String(t.manager||'').trim().toLowerCase();
+  if(mgrName){
+    const byName = mgrs.find(m => String(m.name||'').trim().toLowerCase() === mgrName);
+    if(byName) return byName;
+  }
+  return null;
+}
+function auctionEligiblePlayers(){
+  // Confirmed first; if none, fall back to pending+confirmed so setup can still work during testing
+  const confirmed = confirmedPlayers().filter(p=>!isManagerEntry(p));
+  if(confirmed.length) return confirmed;
+  return registeredPlayers.filter(p => !isManagerEntry(p) && (p.status==='pending' || p.status==='confirmed'));
+}
+function playerById(id){ return registeredPlayers.find(p=>p.id===id) || null; }
+function teamById(id){ return (auction.teams||[]).find(t=>t.id===id) || null; }
+function iconPlayerIds(){
+  return (auction.teams||[]).map(t=>t.iconPlayerId).filter(Boolean);
+}
+function currentPlayer(){
+  return auction.currentPlayerId ? playerById(auction.currentPlayerId) : null;
+}
+function remainingSlots(team){
+  const size = Number(auction.maxSquadSize)||7;
+  const bought = (team.squad||[]).length;
+  const icon = team.iconPlayerId ? 1 : 0;
+  return Math.max(0, size - bought - icon);
+}
+function teamSpent(team){
+  return (team.squad||[]).reduce((s,p)=>s + (Number(p.price)||0), 0);
+}
+function pushHistory(entry){
+  auction.history = (auction.history||[]).concat([Object.assign({ at: Date.now() }, entry)]);
+}
+function snapshotForUndo(){
+  return {
+    status: auction.status,
+    pool: (auction.pool||[]).slice(),
+    order: (auction.order||[]).slice(),
+    cursor: auction.cursor,
+    currentPlayerId: auction.currentPlayerId,
+    currentBid: auction.currentBid,
+    currentTeamId: auction.currentTeamId,
+    bidStarted: auction.bidStarted,
+    sold: JSON.parse(JSON.stringify(auction.sold||[])),
+    unsold: JSON.parse(JSON.stringify(auction.unsold||[])),
+    teams: JSON.parse(JSON.stringify(auction.teams||[]))
+  };
+}
+function pushUndo(){
+  auction.undoStack = (auction.undoStack||[]).concat([snapshotForUndo()]);
+}
+
+/* ---------- Nav ---------- */
+const PAGES = [
+  {id:'home', label:'Home'},
+  {id:'auction', label:'Auction'},
+  {id:'teams', label:'Teams'},
+  {id:'summary', label:'Summary'},
+  {id:'posters', label:'Posters'},
+  {id:'admin', label:'Admin'}
+];
+function buildNav(){
+  const nav = document.getElementById('navLinks');
+  const mob = document.getElementById('mobileNav');
+  nav.innerHTML = ''; mob.innerHTML = '';
+  const pages = isAuctionDeskHidden() ? PAGES.filter(p=>p.id==='admin') : PAGES;
+  pages.forEach(p=>{
+    const b1 = document.createElement('button');
+    b1.textContent = p.label; if(page===p.id) b1.classList.add('active');
+    b1.onclick = ()=>navigate(p.id);
+    nav.appendChild(b1);
+    const b2 = document.createElement('button');
+    b2.textContent = p.label; if(page===p.id) b2.classList.add('active');
+    b2.onclick = ()=>{ navigate(p.id); mob.classList.remove('open'); };
+    mob.appendChild(b2);
+  });
+}
+function navigate(p){ page=p; window.scrollTo({top:0,behavior:'smooth'}); render(); }
+document.getElementById('hamburgerBtn').onclick = ()=>document.getElementById('mobileNav').classList.toggle('open');
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  const eligible = auctionEligiblePlayers();
+  const icons = iconPlayerIds().length;
+  const poolReady = Math.max(0, eligible.length - icons);
+  const title = auction.competitionName || tournamentSettings.name || 'Auction Desk';
+  return `
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <div class="hero-eyebrow">Official Auction Desk</div>
+          <h1><span class="hero-title-name">${escapeHtml(title)}</span>${tournamentSettings.seasonLabel ? `<span class="hero-year">${escapeHtml(tournamentSettings.seasonLabel)}</span>` : ''}</h1>
+          <p class="hero-lead">Live player auction for this season. Teams bid from their budgets and build squads in real time.</p>
+        </div>
+        <div class="hero-logo">
+          <img src="${TOURNAMENT_LOGO}" alt="Titans Super Cup logo">
+        </div>
+      </div>
+      ${tournamentFactsHtml()}
+    </div>
+    <div class="grid-4" style="margin-top:14px;">
+      <div class="stat-card"><div class="stat-label">Registered (confirmed)</div><div class="stat-value">${confirmedPlayers().length}</div></div>
+      <div class="stat-card"><div class="stat-label">Auction pool ready</div><div class="stat-value amber">${auction.status==='setup' ? poolReady : (auction.pool||[]).length}</div></div>
+      <div class="stat-card"><div class="stat-label">Teams</div><div class="stat-value">${(auction.teams||[]).length}</div></div>
+      <div class="stat-card"><div class="stat-label">Sold / Unsold</div><div class="stat-value green">${(auction.sold||[]).length} <span style="color:var(--chalk-dim);font-size:18px;">/</span> <span class="red">${(auction.unsold||[]).length}</span></div></div>
+    </div>
+    ${renderHomeManagers()}
+    <div class="card" style="margin-top:14px;">
+      <h2>Players from registration</h2>
+      <div class="page-sub" style="margin-top:-6px;">Showing confirmed players (falls back to pending if none confirmed yet).</div>
+      ${renderPlayerSourceTable(eligible)}
+    </div>`;
+}
+function renderHomeManagers(){
+  const auctionTeams = Array.isArray(auction.teams) ? auction.teams : [];
+  const mgrs = registeredManagers();
+  const n = Math.max(auctionTeams.length, Number(tournamentSettings.maxTeams)||0, mgrs.length);
+  if(n < 1) return '';
+  const usedMgrIds = new Set();
+  const cards = [];
+  for(let i=0;i<n;i++){
+    const t = auctionTeams[i] || null;
+    let m = t ? teamManagerRecord(t) : null;
+    if(!m && t && t.name){
+      const want = String(t.name).trim().toLowerCase();
+      m = mgrs.find(x => !usedMgrIds.has(x.id) && String(x.teamName||'').trim().toLowerCase()===want) || null;
+    }
+    if(!m){
+      m = mgrs.find(x => !usedMgrIds.has(x.id)) || null;
+    }
+    if(m) usedMgrIds.add(m.id);
+    cards.push({
+      team: (t && t.name) ? t.name : (m && m.teamName) ? m.teamName : ('Team '+(i+1)),
+      name: m ? (m.name||'') : (t && t.manager ? t.manager : ''),
+      photoUrl: m ? (m.photoUrl||'') : ''
+    });
+  }
+  const cols = Math.max(1, Math.ceil(cards.length / 2));
+  const cardHtml = cards.map(c=>`
+    <div class="manager-home-card">
+      ${c.photoUrl ? `<img src="${escapeHtml(c.photoUrl)}" alt="${escapeHtml(c.name||c.team)}">` : `<div class="av">${initials(c.name||c.team)}</div>`}
+      <div class="team">${escapeHtml(c.team)}</div>
+      <div class="mgr">${escapeHtml(c.name || 'Manager pending')}</div>
+    </div>`).join('');
+  return `
+    <div class="card" style="margin-top:14px;">
+      <h2>Managers</h2>
+      <div class="page-sub" style="margin-top:-6px;">Photos from manager registration · ${cards.length} teams in 2 rows</div>
+      <div class="manager-home-grid" style="grid-template-columns:repeat(${cols},minmax(0,1fr));">
+        ${cardHtml}
+      </div>
+    </div>`;
+}
+function renderPlayerSourceTable(list){
+  if(!list.length) return `<div class="empty">No players found in registration. Confirm players in tournament-registration.html first.</div>`;
+  const iconSet = new Set(iconPlayerIds());
+  return `<div class="table-scroll"><table class="ptable">
+    <thead><tr><th></th><th>Serial</th><th>Name</th><th>Position</th><th>Status</th><th>Auction</th></tr></thead>
+    <tbody>${list.map(p=>`
+      <tr>
+        <td>${photoHtml(p.photoUrl, p.name)}</td>
+        <td>#${p.serial||'—'}</td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(positionLabel(p.position))}</td>
+        <td><span class="pill ${p.status}">${escapeHtml(p.status)}</span></td>
+        <td>${iconSet.has(p.id) ? '<span class="pill icon">Icon player</span>' : (auction.pool||[]).includes(p.id) || auction.status==='setup' ? '<span class="pill pool">In pool</span>' : (auction.sold||[]).some(s=>s.playerId===p.id) ? '<span class="pill sold">Sold</span>' : (auction.unsold||[]).some(s=>s.playerId===p.id) ? '<span class="pill unsold">Unsold</span>' : '—'}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ---------- SETUP ---------- */
+function ensureSetupTeams(n){
+  n = Math.max(2, Math.min(16, Number(n)||2));
+  const teams = (auction.teams||[]).slice(0, n);
+  while(teams.length < n){
+    teams.push({
+      id: uid(), name: 'Team '+(teams.length+1), logoUrl:'', manager:'', managerPlayerId:'', mentor:'', captain:'',
+      iconPlayerId:'', budget: Number(auction.defaultBudget)||1000, remainingBudget: Number(auction.defaultBudget)||1000,
+      squad:[]
+    });
+  }
+  auction.teams = teams;
+}
+function renderSetup(){
+  if(!unlocked) return renderNeedUnlock('Sign in as Admin to configure the auction.');
+  if(auction.status!=='setup'){
+    return `<div class="page-title">Admin</div>
+      <div class="card"><div class="form-msg ok">Auction is <strong>${escapeHtml(auction.status)}</strong>. Reset below if you need to reconfigure.</div>
+      <div class="export-row">
+        <button class="btn btn-primary" onclick="navigate('auction')">Go to Auction</button>
+        <button class="btn" onclick="unlocked=false;render()">Lock Admin</button>
+        <button class="btn btn-danger" onclick="resetAuctionConfirm()">Reset Auction</button>
+      </div></div>`;
+  }
+  const eligible = auctionEligiblePlayers();
+  const nTeams = (auction.teams||[]).length || Number(tournamentSettings.maxTeams)||4;
+  if(!(auction.teams||[]).length) ensureSetupTeams(nTeams);
+  const msg = ui.msg;
+
+  return `
+    <div class="page-title">Admin · Auction Setup</div>
+    <div class="page-sub">Configure competition & teams. Icon players are auto-removed from the auction pool when you start.</div>
+    <div class="card" style="padding:12px 16px;">
+      <div class="export-row">
+        <button class="btn small" onclick="unlocked=false;render()">Lock Admin</button>
+        <button class="btn btn-danger small" onclick="resetAuctionConfirm()">Reset Auction</button>
+      </div>
+    </div>
+    ${msg ? `<div class="form-msg ${msg.type}">${msg.text}</div>` : ''}
+    <div class="card">
+      <h2>Competition</h2>
+      <div class="grid-2">
+        <div class="field"><label>Competition Name *</label><input id="setComp" value="${escapeHtml(auction.competitionName||tournamentSettings.name||'')}"></div>
+        <div class="field"><label>Auctioneer Name</label><input id="setAuctioneer" value="${escapeHtml(auction.auctioneerName||'')}"></div>
+        <div class="field"><label>Base Price (₹)</label><input id="setBase" type="number" min="1" value="${auction.basePrice||20}"></div>
+        <div class="field"><label>Default Team Budget (₹)</label><input id="setBudget" type="number" min="1" value="${auction.defaultBudget||1000}"></div>
+        <div class="field"><label>Max Squad Size (incl. icon)</label><input id="setSquad" type="number" min="1" max="30" value="${auction.maxSquadSize||7}"></div>
+        <div class="field"><label>Number of Teams</label><input id="setTeamCount" type="number" min="2" max="16" value="${(auction.teams||[]).length}"></div>
+      </div>
+      <button class="btn btn-outline" onclick="applyTeamCount()">Update Team Count</button>
+      <button class="btn btn-outline" onclick="applyBudgetToAll()">Apply Budget To All Teams</button>
+    </div>
+    ${(auction.teams||[]).map((t,i)=>renderSetupTeamCard(t,i,eligible)).join('')}
+    <div class="card">
+      <div class="export-row">
+        <button class="btn btn-primary xl" onclick="saveSetup()" ${ui.setupBusy?'disabled':''}>${ui.setupBusy?'<span class="spinner"></span> Saving…':'Save Setup'}</button>
+        <button class="btn btn-green xl" onclick="startAuction()" ${ui.setupBusy?'disabled':''}>Start Auction →</button>
+      </div>
+      <div class="hint" style="margin-top:10px;color:var(--chalk-dim);font-size:12px;">Start shuffles eligible players (minus icon players) into the live pool and opens the auction desk.</div>
+    </div>`;
+}
+function renderSetupTeamCard(t, i, eligible){
+  const usedIcons = new Set((auction.teams||[]).filter(x=>x.id!==t.id).map(x=>x.iconPlayerId).filter(Boolean));
+  const options = eligible.filter(p=>!usedIcons.has(p.id) || p.id===t.iconPlayerId);
+  const usedManagers = new Set((auction.teams||[]).filter(x=>x.id!==t.id).map(x=>x.managerPlayerId).filter(Boolean));
+  const managerOptions = registeredManagers().filter(p=>!usedManagers.has(p.id) || p.id===t.managerPlayerId);
+  const selectedManagerId = t.managerPlayerId || (teamManagerRecord(t)||{}).id || '';
+  return `
+    <div class="team-card" data-team="${t.id}">
+      <div class="team-card-head">
+        ${t.logoUrl ? `<img class="team-logo" src="${escapeHtml(t.logoUrl)}">` : `<div class="team-logo placeholder">${i+1}</div>`}
+        <div style="flex:1;">
+          <div class="field" style="margin:0;"><label>Team ${i+1} Name *</label><input data-k="name" data-id="${t.id}" value="${escapeHtml(t.name||'')}"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Manager (from registration)</label>
+          <select data-k="managerPlayerId" data-id="${t.id}">
+            <option value="">Select manager</option>
+            ${managerOptions.map(p=>`<option value="${p.id}" ${selectedManagerId===p.id?'selected':''}>${escapeHtml(p.name)}${p.teamName ? ' · '+escapeHtml(p.teamName) : ''}</option>`).join('')}
+          </select>
+          <div class="hint">${managerOptions.length ? 'Photo is taken from the manager’s registration.' : 'No managers registered yet — they will appear here after signing up.'}</div>
+        </div>
+        <div class="field"><label>Mentor</label><input data-k="mentor" data-id="${t.id}" value="${escapeHtml(t.mentor||'')}"><div class="hint">Typed here by admin. Not collected in registration.</div></div>
+        <div class="field"><label>Captain</label><input data-k="captain" data-id="${t.id}" value="${escapeHtml(t.captain||'')}"></div>
+        <div class="field"><label>Budget (₹)</label><input data-k="budget" data-id="${t.id}" type="number" min="0" value="${t.budget||0}"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Icon Player *</label>
+          <select data-k="iconPlayerId" data-id="${t.id}">
+            <option value="">Select icon player</option>
+            ${options.map(p=>`<option value="${p.id}" ${t.iconPlayerId===p.id?'selected':''}>${escapeHtml(p.name)} · ${escapeHtml(positionLabel(p.position))}</option>`).join('')}
+          </select>
+          <div class="hint">Counts as 1 of 7 squad spots and is highlighted on the team poster. Removed from the auction pool.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Team Logo</label>
+        <div class="photo-drop" onclick="document.getElementById('logo_${t.id}').click()">Tap to upload team logo</div>
+        <input type="file" id="logo_${t.id}" accept="image/*" style="display:none" data-team-logo="${t.id}">
+      </div>
+    </div>`;
+}
+function readSetupFromDom(){
+  const comp = document.getElementById('setComp');
+  if(comp) auction.competitionName = comp.value.trim();
+  const a = document.getElementById('setAuctioneer');
+  if(a) auction.auctioneerName = a.value.trim();
+  const base = document.getElementById('setBase');
+  if(base) auction.basePrice = Math.max(1, Number(base.value)||20);
+  const bud = document.getElementById('setBudget');
+  if(bud) auction.defaultBudget = Math.max(1, Number(bud.value)||1000);
+  const sq = document.getElementById('setSquad');
+  if(sq) auction.maxSquadSize = Math.max(1, Number(sq.value)||7);
+  document.querySelectorAll('[data-k][data-id]').forEach(el=>{
+    const t = teamById(el.dataset.id);
+    if(!t) return;
+    const k = el.dataset.k;
+    if(k==='budget'){ t.budget = Math.max(0, Number(el.value)||0); t.remainingBudget = t.budget; }
+    else if(k==='managerPlayerId'){
+      t.managerPlayerId = el.value;
+      const mp = playerById(el.value);
+      t.manager = mp ? (mp.name||'') : '';
+    }
+    else t[k] = el.value;
+  });
+}
+function applyTeamCount(){
+  readSetupFromDom();
+  const n = Number(document.getElementById('setTeamCount')?.value)||4;
+  ensureSetupTeams(n);
+  ui.msg = {type:'ok', text:'Team count updated to '+auction.teams.length+'.'};
+  render();
+}
+function applyBudgetToAll(){
+  readSetupFromDom();
+  const b = Number(auction.defaultBudget)||1000;
+  (auction.teams||[]).forEach(t=>{ t.budget=b; t.remainingBudget=b; });
+  ui.msg = {type:'ok', text:'Applied ₹'+b+' budget to all teams.'};
+  render();
+}
+async function saveSetup(){
+  if(!unlocked) return;
+  readSetupFromDom();
+  ui.setupBusy = true; ui.msg=null; render();
+  try{
+    if(!auction.competitionName) throw new Error('Enter competition name.');
+    if(!(auction.teams||[]).length) throw new Error('Add at least 2 teams.');
+    for(const t of auction.teams){
+      if(!t.name.trim()) throw new Error('Every team needs a name.');
+      if(!t.iconPlayerId) throw new Error(t.name+' needs an icon player.');
+    }
+    const icons = auction.teams.map(t=>t.iconPlayerId);
+    if(new Set(icons).size !== icons.length) throw new Error('Icon players must be unique across teams.');
+    const mgrIds = auction.teams.map(t=>t.managerPlayerId).filter(Boolean);
+    if(new Set(mgrIds).size !== mgrIds.length) throw new Error('Managers must be unique across teams.');
+    auction.status = 'setup';
+    await persistAuction();
+    ui.msg = {type:'ok', text:'Setup saved to Firebase.'};
+  }catch(e){
+    ui.msg = {type:'err', text:e.message||'Could not save setup.'};
+  }finally{
+    ui.setupBusy = false; render();
+  }
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+async function startAuction(){
+  if(!unlocked) return;
+  readSetupFromDom();
+  try{
+    if(!auction.competitionName) throw new Error('Enter competition name.');
+    for(const t of auction.teams){
+      if(!t.name.trim()) throw new Error('Every team needs a name.');
+      if(!t.iconPlayerId) throw new Error(t.name+' needs an icon player.');
+      t.remainingBudget = Number(t.budget)||0;
+      t.squad = [];
+    }
+    const icons = new Set(iconPlayerIds());
+    const eligible = auctionEligiblePlayers().filter(p=>!icons.has(p.id));
+    if(!eligible.length) throw new Error('No players left in pool after removing icon players.');
+    const order = shuffle(eligible.map(p=>p.id));
+    auction.pool = order.slice();
+    auction.order = order.slice();
+    auction.cursor = 0;
+    auction.sold = [];
+    auction.unsold = [];
+    auction.skipped = [];
+    auction.history = [];
+    auction.undoStack = [];
+    auction.status = 'running';
+    auction.bidStarted = false;
+    auction.currentTeamId = null;
+    auction.currentBid = Number(auction.basePrice)||20;
+    auction.currentPlayerId = order[0] || null;
+    pushHistory({ type:'start', text:'Auction started with '+order.length+' players' });
+    await persistAuction();
+    page = 'auction';
+    ui.msg = {type:'ok', text:'Auction started.'};
+    render();
+  }catch(e){
+    ui.msg = {type:'err', text:e.message||'Could not start auction.'};
+    render();
+  }
+}
+
+/* ---------- AUCTION LIVE ---------- */
+function renderAuction(){
+  if(auction.status==='setup'){
+    return `<div class="page-title">Live Auction</div><div class="card"><div class="form-msg err">Auction not started yet.</div></div>`;
+  }
+  const p = currentPlayer();
+  const highest = auction.currentTeamId ? teamById(auction.currentTeamId) : null;
+  const remaining = (auction.pool||[]).length;
+  const soldN = (auction.sold||[]).length;
+  const unsoldN = (auction.unsold||[]).length;
+  const total = remaining + soldN + unsoldN;
+  const playerNo = Math.min(total, soldN + unsoldN + (p?1:0));
+
+  return `
+    <div class="page-title">${escapeHtml(auction.competitionName||'Live Auction')}</div>
+    <div class="page-sub">Auctioneer: ${escapeHtml(auction.auctioneerName||'—')} · Base ${rupee(auction.basePrice)}${unlocked?' · Controls on':' · View only'}</div>
+    <div class="auction-shell">
+      <div>
+        <div class="player-stage">
+          ${p
+            ? (p.photoUrl ? `<img class="stage-photo" src="${escapeHtml(p.photoUrl)}">` : `<div class="stage-photo fallback">${initials(p.name)}</div>`)
+            : `<div class="stage-photo fallback">✓</div>`}
+          <h1 class="stage-name">${p ? escapeHtml(p.name) : (auction.status==='completed' ? 'Auction Complete' : 'No Player')}</h1>
+          <div class="stage-meta">${p ? escapeHtml(positionLabel(p.position)) + (p.serial ? ' · #'+p.serial : '') : '—'}</div>
+          <div class="bid-hero">
+            <div class="bid-label">Current Bid</div>
+            <div class="bid-amount">${rupee(auction.currentBid||auction.basePrice||0)}</div>
+            <div class="bid-team">${highest ? escapeHtml(highest.name) : (auction.bidStarted ? 'Waiting for team…' : 'Bid not started')}</div>
+            <div class="stage-meta">Base price ${rupee(auction.basePrice)}</div>
+          </div>
+          <div class="auction-stats">
+            <div class="mini-stat"><div class="l">Remaining</div><div class="v">${remaining}</div></div>
+            <div class="mini-stat"><div class="l">Sold</div><div class="v" style="color:var(--green)">${soldN}</div></div>
+            <div class="mini-stat"><div class="l">Unsold</div><div class="v" style="color:var(--red)">${unsoldN}</div></div>
+            <div class="mini-stat"><div class="l">Player #</div><div class="v">${playerNo}/${total||0}</div></div>
+          </div>
+        </div>
+        ${unlocked && auction.status==='running' ? renderAuctionControls() : ''}
+      </div>
+      <div>
+        <div class="card">
+          <h2>Teams · Budget & Slots</h2>
+          <div class="team-budget-grid">
+            ${(auction.teams||[]).map(t=>{
+              const slots = remainingSlots(t);
+              const active = auction.currentTeamId===t.id;
+              const broke = t.remainingBudget < (auction.currentBid||0) || slots<=0;
+              return `<div class="tb-row ${active?'active':''} ${broke?'broke':''}" onclick="selectBiddingTeam('${t.id}')">
+                ${t.logoUrl ? `<img class="tb-logo" src="${escapeHtml(t.logoUrl)}">` : `<div class="tb-logo" style="display:flex;align-items:center;justify-content:center;background:var(--turf);font-family:Teko;font-size:18px;">${initials(t.name)}</div>`}
+                <div>
+                  <div class="tb-name">${escapeHtml(t.name)}</div>
+                  <div class="tb-sub">${(t.squad||[]).length} bought · ${slots} slots · spent ${rupee(teamSpent(t))}</div>
+                </div>
+                <div class="tb-budget">${rupee(t.remainingBudget)}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="card">
+          <h2>Live log</h2>
+          <div class="history-list">
+            ${(auction.history||[]).slice().reverse().slice(0,40).map(h=>`
+              <div class="history-item"><strong>${escapeHtml(h.type)}</strong> — ${escapeHtml(h.text||'')} <span style="opacity:.7">· ${new Date(h.at).toLocaleTimeString()}</span></div>
+            `).join('') || '<div class="empty">No actions yet.</div>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+function renderAuctionControls(){
+  return `
+    <div class="card" style="margin-top:12px;">
+      <h2>Auctioneer Controls</h2>
+      <div class="controls">
+        <button class="btn btn-primary xl" onclick="startBid()">Start Bid</button>
+        <button class="btn btn-green xl" onclick="markSold()">Sold</button>
+        <button class="btn btn-danger xl" onclick="markUnsold()">Unsold</button>
+        <button class="btn xl" onclick="skipPlayer()">Skip</button>
+        <button class="btn xl" onclick="nextPlayer()">Next Player</button>
+        <button class="btn btn-blue xl" onclick="undoLast()">Undo Last</button>
+      </div>
+      <div class="inc-row">
+        <button class="btn" onclick="bumpBid(10)">+₹10</button>
+        <button class="btn" onclick="bumpBid(20)">+₹20</button>
+        <button class="btn" onclick="bumpBid(50)">+₹50</button>
+        <button class="btn" onclick="bumpBid(100)">+₹100</button>
+        <button class="btn" onclick="bumpBid(-10)">-₹10</button>
+        <button class="btn" onclick="bumpBid(-20)">-₹20</button>
+        <button class="btn" onclick="bumpBid(-50)">-₹50</button>
+        <input id="customInc" type="number" placeholder="Custom ±" style="width:110px;background:var(--panel-soft);border:1px solid var(--line);color:var(--chalk);border-radius:8px;padding:10px;" value="${escapeHtml(ui.customInc)}">
+        <button class="btn" onclick="bumpCustom()">Apply</button>
+      </div>
+      <div class="hint" style="margin-top:10px;color:var(--chalk-dim);font-size:12px;">Tap a team card on the right to set the current highest bidder before marking Sold.</div>
+    </div>`;
+}
+function selectBiddingTeam(id){
+  if(!unlocked || auction.status!=='running') return;
+  const t = teamById(id);
+  if(!t) return;
+  if(remainingSlots(t)<=0){ alert(t.name+' has no remaining slots.'); return; }
+  if((t.remainingBudget||0) < (auction.currentBid||0)){ alert(t.name+' cannot afford the current bid.'); return; }
+  auction.currentTeamId = id;
+  if(!auction.bidStarted){
+    auction.bidStarted = true;
+    auction.currentBid = Number(auction.basePrice)||20;
+  }
+  persistAuction().catch(e=>alert(e.message));
+}
+async function startBid(){
+  if(!requireControl()) return;
+  if(!currentPlayer()) return alert('No current player.');
+  pushUndo();
+  auction.bidStarted = true;
+  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentTeamId = null;
+  pushHistory({ type:'start_bid', text:(currentPlayer()?.name||'')+' opened at '+rupee(auction.currentBid) });
+  await persistAuction();
+}
+async function bumpBid(delta){
+  if(!requireControl()) return;
+  if(!auction.bidStarted) await startBid();
+  pushUndo();
+  const next = Math.max(Number(auction.basePrice)||20, (Number(auction.currentBid)||0) + Number(delta));
+  auction.currentBid = next;
+  pushHistory({ type:'bid', text:'Bid → '+rupee(next)+(auction.currentTeamId?' ('+(teamById(auction.currentTeamId)?.name||'')+')':'') });
+  await persistAuction();
+}
+async function bumpCustom(){
+  const el = document.getElementById('customInc');
+  const v = Number(el?.value);
+  ui.customInc = el?.value || '';
+  if(!Number.isFinite(v) || v===0) return alert('Enter a non-zero custom amount.');
+  await bumpBid(v);
+}
+async function markSold(){
+  if(!requireControl()) return;
+  const p = currentPlayer();
+  if(!p) return alert('No current player.');
+  if(!auction.bidStarted) return alert('Start the bid first.');
+  if(!auction.currentTeamId) return alert('Select the winning team.');
+  const team = teamById(auction.currentTeamId);
+  if(!team) return;
+  const price = Number(auction.currentBid)||0;
+  if(price < (Number(auction.basePrice)||0)) return alert('Bid below base price.');
+  if(remainingSlots(team)<=0) return alert('Team has no slots left.');
+  if((team.remainingBudget||0) < price) return alert('Team cannot afford this bid.');
+  pushUndo();
+  team.remainingBudget = (Number(team.remainingBudget)||0) - price;
+  team.squad = (team.squad||[]).concat([{
+    playerId:p.id, name:p.name, photoUrl:p.photoUrl||'', position:p.position||'', price, soldAt:Date.now()
+  }]);
+  auction.sold = (auction.sold||[]).concat([{ playerId:p.id, teamId:team.id, price, at:Date.now() }]);
+  auction.pool = (auction.pool||[]).filter(id=>id!==p.id);
+  pushHistory({ type:'sold', text:p.name+' sold to '+team.name+' for '+rupee(price) });
+  advanceAfterResolve();
+  await persistAuction();
+}
+async function markUnsold(){
+  if(!requireControl()) return;
+  const p = currentPlayer();
+  if(!p) return alert('No current player.');
+  pushUndo();
+  auction.unsold = (auction.unsold||[]).concat([{ playerId:p.id, at:Date.now() }]);
+  auction.pool = (auction.pool||[]).filter(id=>id!==p.id);
+  pushHistory({ type:'unsold', text:p.name+' went unsold' });
+  advanceAfterResolve();
+  await persistAuction();
+}
+async function skipPlayer(){
+  if(!requireControl()) return;
+  const p = currentPlayer();
+  if(!p) return;
+  pushUndo();
+  // move current to end of pool order
+  auction.pool = (auction.pool||[]).filter(id=>id!==p.id).concat([p.id]);
+  auction.skipped = (auction.skipped||[]).concat([{ playerId:p.id, at:Date.now() }]);
+  pushHistory({ type:'skip', text:(p.name||'')+' skipped' });
+  auction.currentPlayerId = auction.pool[0] || null;
+  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentTeamId = null;
+  auction.bidStarted = false;
+  await persistAuction();
+}
+function advanceAfterResolve(){
+  auction.currentPlayerId = (auction.pool||[])[0] || null;
+  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentTeamId = null;
+  auction.bidStarted = false;
+  if(!(auction.pool||[]).length){
+    auction.status = 'completed';
+    pushHistory({ type:'complete', text:'Auction completed' });
+  }
+}
+async function nextPlayer(){
+  if(!requireControl()) return;
+  if(auction.bidStarted && currentPlayer()){
+    if(!confirm('Current bid is open. Move to next without selling? Player stays in pool (skip).')) return;
+    return skipPlayer();
+  }
+  // if somehow stuck, sync to pool head
+  pushUndo();
+  auction.currentPlayerId = (auction.pool||[])[0] || null;
+  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentTeamId = null;
+  auction.bidStarted = false;
+  pushHistory({ type:'next', text:'Moved to next player' });
+  await persistAuction();
+}
+async function undoLast(){
+  if(!requireControl()) return;
+  const stack = auction.undoStack||[];
+  if(!stack.length) return alert('Nothing to undo.');
+  const prev = stack[stack.length-1];
+  auction.undoStack = stack.slice(0,-1);
+  Object.assign(auction, {
+    status: prev.status,
+    pool: prev.pool,
+    order: prev.order,
+    cursor: prev.cursor,
+    currentPlayerId: prev.currentPlayerId,
+    currentBid: prev.currentBid,
+    currentTeamId: prev.currentTeamId,
+    bidStarted: prev.bidStarted,
+    sold: prev.sold,
+    unsold: prev.unsold,
+    teams: prev.teams
+  });
+  pushHistory({ type:'undo', text:'Reverted last action' });
+  await persistAuction();
+}
+function requireControl(){
+  if(!unlocked){ alert('Sign in as Admin first.'); return false; }
+  if(auction.status!=='running'){ alert('Auction is not running.'); return false; }
+  return true;
+}
+
+/* ---------- TEAMS ---------- */
+function renderTeams(){
+  const teams = auction.teams||[];
+  if(!teams.length) return `<div class="page-title">Teams</div><div class="card empty">No teams configured yet.</div>`;
+  const focus = ui.teamPageId && teamById(ui.teamPageId) ? ui.teamPageId : teams[0].id;
+  ui.teamPageId = focus;
+  const t = teamById(focus);
+  const icon = t.iconPlayerId ? playerById(t.iconPlayerId) : null;
+  const manager = teamManagerRecord(t);
+  const managerName = manager ? manager.name : (t.manager || '—');
+  return `
+    <div class="page-title">Team Squads</div>
+    <div class="page-sub">${escapeHtml(auction.competitionName||'')}</div>
+    <div class="admin-tabs">${teams.map(x=>`<button class="admin-tab ${x.id===focus?'active':''}" onclick="ui.teamPageId='${x.id}';render()">${escapeHtml(x.name)}</button>`).join('')}</div>
+    <div class="card">
+      <div class="team-card-head">
+        ${t.logoUrl ? `<img class="team-logo" src="${escapeHtml(t.logoUrl)}">` : `<div class="team-logo placeholder">${initials(t.name)}</div>`}
+        <div>
+          <div style="font-family:Teko;font-size:32px;text-transform:uppercase;line-height:1;">${escapeHtml(t.name)}</div>
+          <div class="page-sub" style="margin:6px 0 0;">Mentor ${escapeHtml(t.mentor||'—')} · Captain ${escapeHtml(t.captain||'—')}</div>
+        </div>
+      </div>
+      <div class="poster-manager" style="max-width:420px;">
+        ${manager && manager.photoUrl ? `<img src="${escapeHtml(manager.photoUrl)}" alt="">` : `<div class="av">${initials(managerName)}</div>`}
+        <div>
+          <div class="role">Manager</div>
+          <div class="nm">${escapeHtml(managerName)}</div>
+        </div>
+      </div>
+      <div class="grid-4" style="margin:14px 0;">
+        <div class="stat-card"><div class="stat-label">Remaining budget</div><div class="stat-value amber">${rupee(t.remainingBudget)}</div></div>
+        <div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value">${rupee(teamSpent(t))}</div></div>
+        <div class="stat-card"><div class="stat-label">Purchased</div><div class="stat-value green">${(t.squad||[]).length}</div></div>
+        <div class="stat-card"><div class="stat-label">Slots left</div><div class="stat-value">${remainingSlots(t)}</div></div>
+      </div>
+      <h2>Icon Player</h2>
+      ${icon ? `<div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">${photoHtml(icon.photoUrl, icon.name)}<div><strong>${escapeHtml(icon.name)}</strong><div class="page-sub" style="margin:0;">${escapeHtml(positionLabel(icon.position))} · pre-assigned</div></div></div>` : '<div class="empty">No icon player</div>'}
+      <h2>Purchased Players</h2>
+      ${(t.squad||[]).length ? `<div class="table-scroll"><table class="ptable"><thead><tr><th></th><th>Name</th><th>Position</th><th>Price</th></tr></thead>
+        <tbody>${(t.squad||[]).map(s=>`<tr><td>${photoHtml(s.photoUrl,s.name)}</td><td>${escapeHtml(s.name)}</td><td>${escapeHtml(positionLabel(s.position))}</td><td>${rupee(s.price)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No purchases yet.</div>'}
+    </div>`;
+}
+
+/* ---------- SUMMARY ---------- */
+function renderSummary(){
+  const teams = auction.teams||[];
+  const sold = auction.sold||[];
+  const unsold = auction.unsold||[];
+  const totalValue = sold.reduce((s,x)=>s+Number(x.price||0),0);
+  let highest=null, lowest=null;
+  sold.forEach(s=>{
+    if(!highest || s.price>highest.price) highest=s;
+    if(!lowest || s.price<lowest.price) lowest=s;
+  });
+  const hp = highest ? playerById(highest.playerId) : null;
+  const lp = lowest ? playerById(lowest.playerId) : null;
+  return `
+    <div class="page-title">Auction Summary</div>
+    <div class="page-sub">Live totals · exports include PDF, Excel, CSV, JSON</div>
+    <div class="grid-4">
+      <div class="stat-card"><div class="stat-label">Total auction value</div><div class="stat-value amber">${rupee(totalValue)}</div></div>
+      <div class="stat-card"><div class="stat-label">Players sold</div><div class="stat-value green">${sold.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Unsold</div><div class="stat-value red">${unsold.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Remaining in pool</div><div class="stat-value">${(auction.pool||[]).length}</div></div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h2>Highlights</h2>
+      <div class="page-sub">Highest sold: ${hp?escapeHtml(hp.name)+' · '+rupee(highest.price)+(teamById(highest.teamId)?' · '+escapeHtml(teamById(highest.teamId).name):''):'—'}<br>
+      Lowest sold: ${lp?escapeHtml(lp.name)+' · '+rupee(lowest.price):'—'}</div>
+    </div>
+    <div class="card">
+      <h2>Team spend</h2>
+      <div class="table-scroll"><table class="ptable">
+        <thead><tr><th>Team</th><th>Bought</th><th>Spent</th><th>Remaining</th></tr></thead>
+        <tbody>${teams.map(t=>`<tr><td>${escapeHtml(t.name)}</td><td>${(t.squad||[]).length}</td><td>${rupee(teamSpent(t))}</td><td>${rupee(t.remainingBudget)}</td></tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Unsold players</h2>
+      ${unsold.length ? `<div class="table-scroll"><table class="ptable"><thead><tr><th></th><th>Name</th><th>Position</th></tr></thead>
+        <tbody>${unsold.map(u=>{ const p=playerById(u.playerId); return p?`<tr><td>${photoHtml(p.photoUrl,p.name)}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(positionLabel(p.position))}</td></tr>`:''; }).join('')}</tbody></table></div>` : '<div class="empty">None</div>'}
+    </div>
+    <div class="card">
+      <h2>Full sale history</h2>
+      <div class="table-scroll"><table class="ptable">
+        <thead><tr><th>Player</th><th>Team</th><th>Price</th><th>Time</th></tr></thead>
+        <tbody>${sold.map(s=>{
+          const p=playerById(s.playerId); const t=teamById(s.teamId);
+          return `<tr><td>${escapeHtml(p?.name||s.playerId)}</td><td>${escapeHtml(t?.name||'')}</td><td>${rupee(s.price)}</td><td>${new Date(s.at).toLocaleString()}</td></tr>`;
+        }).join('') || '<tr><td colspan="4" class="empty">No sales yet</td></tr>'}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Export</h2>
+      <div class="export-row">
+        <button class="btn btn-primary" onclick="exportPDF()">PDF</button>
+        <button class="btn" onclick="exportExcel()">Excel</button>
+        <button class="btn" onclick="exportCSV()">CSV</button>
+        <button class="btn" onclick="exportJSON()">JSON</button>
+      </div>
+    </div>`;
+}
+
+function exportRows(){
+  const rows = [];
+  (auction.teams||[]).forEach(t=>{
+    if(t.iconPlayerId){
+      const ip = playerById(t.iconPlayerId);
+      rows.push({ Team:t.name, Player:ip?.name||'', Position:positionLabel(ip?.position), Price:0, Type:'Icon', RemainingBudget:t.remainingBudget });
+    }
+    (t.squad||[]).forEach(s=>{
+      rows.push({ Team:t.name, Player:s.name, Position:positionLabel(s.position), Price:s.price, Type:'Sold', RemainingBudget:t.remainingBudget });
+    });
+  });
+  (auction.unsold||[]).forEach(u=>{
+    const p = playerById(u.playerId);
+    rows.push({ Team:'—', Player:p?.name||'', Position:positionLabel(p?.position), Price:'', Type:'Unsold', RemainingBudget:'' });
+  });
+  return rows;
+}
+function exportCSV(){
+  const rows = exportRows();
+  if(!rows.length) return alert('Nothing to export.');
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(',')].concat(rows.map(r=>headers.map(h=>`"${String(r[h]).replace(/"/g,'""')}"`).join(','))).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'auction_results.csv'; a.click();
+}
+function exportExcel(){
+  const rows = exportRows();
+  if(!rows.length) return alert('Nothing to export.');
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Auction');
+  XLSX.writeFile(wb, 'auction_results.xlsx');
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify({ auction, players:registeredPlayers }, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'auction_results.json'; a.click();
+}
+function exportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text((auction.competitionName||'Auction')+' — Summary', 14, 16);
+  doc.setFontSize(10);
+  doc.text('Generated '+new Date().toLocaleString(), 14, 22);
+  const body = (auction.teams||[]).map(t=>[t.name, (t.squad||[]).length, teamSpent(t), t.remainingBudget]);
+  doc.autoTable({ startY:28, head:[['Team','Bought','Spent','Remaining']], body, headStyles:{fillColor:[242,185,59], textColor:20} });
+  let y = (doc.lastAutoTable?.finalY||28)+10;
+  doc.text('Sale history', 14, y);
+  doc.autoTable({
+    startY:y+4,
+    head:[['Player','Team','Price']],
+    body:(auction.sold||[]).map(s=>[playerById(s.playerId)?.name||'', teamById(s.teamId)?.name||'', s.price])
+  });
+  doc.save('auction_summary.pdf');
+}
+
+/* ---------- POSTERS ---------- */
+function renderPosters(){
+  const teams = auction.teams||[];
+  if(!teams.length) return `<div class="page-title">Posters</div><div class="card empty">Configure teams first.</div>`;
+  const focus = ui.posterTeamId && teamById(ui.posterTeamId) ? ui.posterTeamId : teams[0].id;
+  ui.posterTeamId = focus;
+  const t = teamById(focus);
+  const icon = t.iconPlayerId ? playerById(t.iconPlayerId) : null;
+  return `
+    <div class="page-title">Team Posters</div>
+    <div class="page-sub">Share-ready cards · export high-res PNG</div>
+    <div class="admin-tabs">${teams.map(x=>`<button class="admin-tab ${x.id===focus?'active':''}" onclick="ui.posterTeamId='${x.id}';render()">${escapeHtml(x.name)}</button>`).join('')}</div>
+    <div class="export-row" style="margin-bottom:14px;">
+      <button class="btn btn-primary" onclick="downloadPoster('${t.id}')">⬇ Download PNG</button>
+      <button class="btn" onclick="downloadAllPosters()">⬇ Download All Team PNGs</button>
+    </div>
+    <div id="posterRoot">${renderPosterCard(t, icon, TOURNAMENT_LOGO)}</div>`;
+}
+function renderPosterCard(t, icon, logo){
+  const squadSize = Number(auction.maxSquadSize)||7;
+  const bought = (t.squad||[]).slice(0, Math.max(0, squadSize - (icon ? 1 : 0)));
+  const players = [];
+  if(icon) players.push({ name:icon.name, photoUrl:icon.photoUrl, position:icon.position, price:0, tag:'ICON', icon:true });
+  bought.forEach(s=>players.push({ name:s.name, photoUrl:s.photoUrl, position:s.position, price:s.price, tag:rupee(s.price), icon:false }));
+  const manager = teamManagerRecord(t);
+  const managerName = manager ? manager.name : (t.manager || '');
+  const managerPhoto = manager ? (manager.photoUrl || '') : '';
+  const extraBits = [t.mentor ? 'Mentor: '+t.mentor : '', t.captain ? 'Captain: '+t.captain : ''].filter(Boolean);
+  return `
+    <div class="poster" id="poster_${t.id}">
+      <div class="poster-top">
+        <div>
+          <div class="poster-comp">${escapeHtml([auction.competitionName||tournamentSettings.name||'Titans Super Cup', tournamentSettings.seasonLabel].filter(Boolean).join(' '))}</div>
+          <div class="poster-team">${escapeHtml(t.name)}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${logo ? `<img src="${escapeHtml(logo)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">` : ''}
+          ${t.logoUrl ? `<img src="${escapeHtml(t.logoUrl)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid rgba(242,185,59,.4);">` : ''}
+        </div>
+      </div>
+      <div class="poster-manager">
+        ${managerPhoto ? `<img src="${escapeHtml(managerPhoto)}" alt="">` : `<div class="av">${initials(managerName||'M')}</div>`}
+        <div>
+          <div class="role">Manager</div>
+          <div class="nm">${escapeHtml(managerName || '—')}</div>
+          ${extraBits.length ? `<div class="sub">${escapeHtml(extraBits.join(' · '))}</div>` : ''}
+        </div>
+      </div>
+      <div class="poster-meta">Squad ${players.length} / ${squadSize} (incl. icon)</div>
+      <div class="poster-players">
+        ${players.map(p=>`
+          <div class="poster-player${p.icon ? ' icon' : ''}">
+            ${p.photoUrl ? `<img src="${escapeHtml(p.photoUrl)}">` : `<div class="av">${initials(p.name)}</div>`}
+            <div>
+              <div class="nm">${escapeHtml(p.name)}${p.icon ? '<span class="icon-tag">ICON</span>' : ''}</div>
+              <div class="pr">${escapeHtml(positionLabel(p.position))}</div>
+            </div>
+          </div>`).join('') || '<div class="empty">No players</div>'}
+      </div>
+    </div>`;
+}
+async function downloadPoster(teamId){
+  const el = document.getElementById('poster_'+teamId) || document.querySelector('.poster');
+  if(!el) return;
+  const canvas = await html2canvas(el, { scale:3, backgroundColor:'#0A0E16', useCORS:true });
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  const t = teamById(teamId);
+  a.download = (t?.name||'team').replace(/\s+/g,'_') + '_poster.png';
+  a.click();
+}
+async function downloadAllPosters(){
+  for(const t of (auction.teams||[])){
+    ui.posterTeamId = t.id;
+    render();
+    await new Promise(r=>setTimeout(r, 200));
+    await downloadPoster(t.id);
+  }
+}
+
+/* ---------- ADMIN / UNLOCK ---------- */
+function renderNeedUnlock(msg){
+  return `<div class="page-title">Admin</div><div class="card"><div class="form-msg err">${escapeHtml(msg||'Admin sign-in required.')}</div></div>`;
+}
+function renderAdmin(){
+  if(unlocked) return renderSetup();
+  return `
+    <div class="login-shell">
+      <h2>Admin Login</h2>
+      ${ui.loginErr ? `<div class="form-msg err">${ui.loginErr}</div>` : ''}
+      <form id="pinForm">
+        <div class="field"><label>Password</label><input id="pinInput" type="password" inputmode="numeric" autocomplete="current-password"></div>
+        <button class="btn btn-primary" style="width:100%;" type="submit">Sign In</button>
+      </form>
+    </div>`;
+}
+function resetAuctionConfirm(){
+  if(!confirm('Reset the entire auction? This cannot be undone.')) return;
+  persistAuction(defaultAuction()).then(()=>{
+    ui.msg = {type:'ok', text:'Auction reset.'};
+    page='admin'; render();
+  }).catch(e=>alert(e.message));
+}
+
+/* ---------- RENDER + EVENTS ---------- */
+function isAuctionDeskHidden(){
+  return tournamentSettings.auctionDeskVisible===false && !unlocked;
+}
+function renderDeskClosed(){
+  return `
+    <div class="page-title">Auction Desk</div>
+    <div class="card" style="text-align:center; padding:36px 24px;">
+      <div class="form-msg err" style="display:inline-block;">Auction Desk is currently hidden by the organizer.</div>
+      <div class="page-sub" style="margin:16px 0 0;">If you are an admin, sign in to access the desk while it stays hidden from the public.</div>
+      <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <a class="btn btn-outline" href="tournament-registration.html">← Back to Registration</a>
+        <button class="btn btn-primary" onclick="navigate('admin')">Admin Sign In</button>
+      </div>
+    </div>`;
+}
+function render(){
+  try{
+    buildNav();
+    document.getElementById('brandName').textContent = auction.competitionName || tournamentSettings.name || 'Auction Desk';
+    document.getElementById('footText').textContent = '© ' + (auction.competitionName || 'Auction Desk');
+    const deskTitle = auction.competitionName || tournamentSettings.name || 'Auction Desk';
+    const seasonPart = String(tournamentSettings.seasonLabel||'').trim();
+    document.title = seasonPart ? (deskTitle + ' ' + seasonPart + ' · Auction') : (deskTitle + ' · Auction');
+    const app = document.getElementById('app');
+    if(isAuctionDeskHidden() && page!=='admin'){
+      app.innerHTML = renderDeskClosed();
+      wireEvents();
+      return;
+    }
+    if(page==='home') app.innerHTML = renderHome();
+    else if(page==='auction') app.innerHTML = renderAuction();
+    else if(page==='teams') app.innerHTML = renderTeams();
+    else if(page==='summary') app.innerHTML = renderSummary();
+    else if(page==='posters') app.innerHTML = renderPosters();
+    else if(page==='admin') app.innerHTML = renderAdmin();
+    // legacy: setup tab removed — redirect
+    else if(page==='setup'){ page='admin'; app.innerHTML = renderAdmin(); }
+    wireEvents();
+  }catch(e){
+    console.error(e);
+    document.getElementById('app').innerHTML = `<div class="card"><div class="form-msg err">Render error: ${escapeHtml(e.message)}</div></div>`;
+  }
+}
+function wireEvents(){
+  const pinForm = document.getElementById('pinForm');
+  if(pinForm){
+    const pinInput = document.getElementById('pinInput');
+    pinInput?.focus();
+    pinForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      if((pinInput?.value||'').trim()===EDIT_PIN){
+        unlocked = true; ui.loginErr=''; page='admin'; render();
+      }else{
+        ui.loginErr='Incorrect PIN.'; render();
+      }
+    });
+  }
+  document.querySelectorAll('[data-team-logo]').forEach(inp=>{
+    inp.addEventListener('change', async e=>{
+      const f = e.target.files?.[0]; if(!f) return;
+      const id = inp.getAttribute('data-team-logo');
+      const t = teamById(id); if(!t) return;
+      try{
+        readSetupFromDom();
+        t.logoUrl = await uploadToCloudinary(f);
+        render();
+      }catch(err){ alert(err.message); }
+    });
+  });
+}
+
+initFirebase();
+render();
+</script>
+</body>
+</html>
