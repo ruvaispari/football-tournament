@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tournament Dashboard</title>
+<title>Titans Super Cup 2026</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -46,8 +46,16 @@ button{font-family:inherit;}
 }
 .brand{display:flex; align-items:center; gap:12px; cursor:pointer;}
 .brand-icon{
-  width:40px; height:40px; border-radius:8px; background:var(--floodlight);
-  display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+  width:40px; height:40px; border-radius:8px; background:rgba(10,14,22,0.55);
+  border:1px solid rgba(242,185,59,0.4);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  overflow:hidden;
+}
+.brand-icon img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
 }
 .brand-name{font-family:'Teko', sans-serif; font-weight:700; font-size:22px; letter-spacing:0.02em; text-transform:uppercase; line-height:1;}
 .brand-sub{font-family:'JetBrains Mono', monospace; font-size:9px; letter-spacing:0.22em; color:var(--floodlight); text-transform:uppercase; margin-top:3px;}
@@ -73,9 +81,37 @@ button{font-family:inherit;}
 /* ---- Hero ---- */
 .hero{
   margin-top:26px; padding: 36px 30px; border-radius:16px;
-  background: linear-gradient(160deg, #0F2A22 0%, #0B1826 70%);
+  background:
+    radial-gradient(700px 280px at 90% 0%, rgba(242,185,59,0.08), transparent 55%),
+    linear-gradient(160deg, #0F2A22 0%, #0B1826 70%);
   border:1px solid var(--turf-edge);
   position:relative; overflow:hidden;
+}
+.hero-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:28px;
+}
+.hero-copy{flex:1; min-width:0;}
+.hero-logo{
+  flex:0 0 160px;
+  width:160px;
+  height:160px;
+  border-radius:50%;
+  border:2px solid rgba(242,185,59,0.35);
+  background:rgba(10,14,22,0.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 0 0 6px rgba(242,185,59,0.06);
+}
+.hero-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
 }
 .live-badge{display:flex; align-items:center; gap:8px; margin-bottom:18px;}
 .live-dot{width:8px; height:8px; border-radius:50%; background:var(--loss); animation:pulse 1.6s infinite;}
@@ -89,6 +125,14 @@ button{font-family:inherit;}
 .hero h1 [contenteditable="true"]{outline:none; border-bottom:1px dashed var(--floodlight-soft);}
 .hero p{color:var(--chalk-dim); max-width:560px; font-size:15px; line-height:1.55; margin:16px 0 26px;}
 .hero-actions{display:flex; gap:12px; flex-wrap:wrap;}
+@media(max-width:760px){
+  .hero-top{flex-direction:column-reverse; align-items:center; text-align:center;}
+  .hero-copy{width:100%;}
+  .hero p{margin-left:auto; margin-right:auto;}
+  .hero-logo{flex-basis:120px; width:120px; height:120px;}
+  .hero-actions{justify-content:center;}
+  .live-badge{justify-content:center;}
+}
 .btn{
   font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
   padding:12px 22px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
@@ -557,15 +601,60 @@ td.pts{font-weight:700; color:var(--floodlight);}
   margin:0; font-size:14px; line-height:1.55; color:var(--chalk-dim); padding-left:8px;
 }
 
-/* lock button + footer */
+/* footer */
 footer{display:flex; align-items:center; justify-content:space-between; padding:22px 4px 10px; border-top:1px solid var(--line); margin-top:36px; flex-wrap:wrap; gap:10px;}
 .foot-text{font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; color:var(--chalk-dim); text-transform:uppercase;}
-.lock-btn{font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; background:var(--panel-solid); border:1px solid var(--line); color:var(--chalk-dim); padding:8px 16px; border-radius:999px; cursor:pointer;}
-.lock-btn.unlocked{background:var(--floodlight-soft); border-color:var(--floodlight); color:var(--floodlight);}
 .fb-status{font-family:'JetBrains Mono', monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--chalk-dim);}
 .fb-status.ok{color:var(--win);}
 .fb-status.err{color:var(--loss);}
 .fb-status.wait{color:var(--floodlight);}
+
+/* admin login */
+.admin-wrap{
+  max-width:420px; margin:48px auto 20px;
+}
+.admin-card{
+  background:var(--panel-solid); border:1px solid var(--line); border-radius:16px;
+  padding:36px 32px 28px;
+}
+.admin-card h1{
+  font-family:'Teko', sans-serif; font-weight:700; font-size:36px; letter-spacing:0.04em;
+  text-transform:uppercase; text-align:center; margin:0 0 28px; color:var(--chalk); line-height:1;
+}
+.admin-field{display:flex; flex-direction:column; gap:8px; margin-bottom:20px;}
+.admin-field label{
+  font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.16em;
+  text-transform:uppercase; color:var(--chalk-dim);
+}
+.admin-field input{
+  width:100%; background:var(--panel-soft); border:1px solid var(--line); color:var(--chalk);
+  border-radius:10px; padding:14px 14px; font-family:'Inter'; font-size:15px; outline:none;
+}
+.admin-field input:focus{border-color:var(--floodlight);}
+.admin-field input::placeholder{color:rgba(140,153,166,0.55);}
+.admin-signin{
+  width:100%; margin-top:4px; padding:14px 22px; border-radius:10px; border:none; cursor:pointer;
+  background:var(--floodlight); color:#241A03; font-family:'JetBrains Mono', monospace;
+  font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+}
+.admin-signin:hover{filter:brightness(1.08);}
+.admin-error{
+  color:var(--loss); font-size:13px; margin:0 0 14px; text-align:center; min-height:1.2em;
+}
+.admin-unlocked{
+  text-align:center;
+}
+.admin-unlocked .admin-status-line{
+  font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--win); margin:0 0 10px;
+}
+.admin-unlocked p{color:var(--chalk-dim); font-size:14px; line-height:1.55; margin:0 0 22px;}
+.admin-lock-btn{
+  width:100%; padding:14px 22px; border-radius:10px; cursor:pointer;
+  background:transparent; border:1px solid var(--line); color:var(--chalk);
+  font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;
+}
+.admin-lock-btn:hover{border-color:var(--chalk-dim);}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -574,7 +663,7 @@ footer{display:flex; align-items:center; justify-content:space-between; padding:
 
 <div class="topbar">
   <div class="brand" onclick="navigate('home')">
-    <div class="brand-icon">🏆</div>
+    <div class="brand-icon"><img src="titans-super-cup-logo.png" alt="Titans Super Cup"></div>
     <div>
       <div class="brand-name" id="brandName">Your Tournament</div>
       <div class="brand-sub" id="brandSeason">SEASON 2026</div>
@@ -592,7 +681,6 @@ footer{display:flex; align-items:center; justify-content:space-between; padding:
       <div class="foot-text" id="footText">© Your Tournament 2026 · Live tournament tracker</div>
       <div class="fb-status wait" id="fbStatus">Connecting to Firebase…</div>
     </div>
-    <button class="lock-btn" id="editToggle">🔒 View only — tap to edit</button>
   </footer>
 </div>
 
@@ -614,6 +702,7 @@ const DOC_PATH = { collection: 'tournaments', id: 'live' }; // Firestore: tourna
 const GROUP_SIZE = 4;
 const OFFSET = { A:0, B:4 };
 const EDIT_PIN = "2580"; // change this to your own PIN
+const TOURNAMENT_LOGO = 'titans-super-cup-logo.png';
 const PAGES = [
   {id:'home', label:'Home'},
   {id:'standings', label:'Standings'},
@@ -621,7 +710,8 @@ const PAGES = [
   {id:'teams', label:'Teams'},
   {id:'knockout', label:'Knockout'},
   {id:'stats', label:'Stats'},
-  {id:'rules', label:'Rules'}
+  {id:'rules', label:'Rules'},
+  {id:'admin', label:'Admin'}
 ];
 
 let editMode = false;
@@ -1279,12 +1369,19 @@ function renderHome(){
 
   return `
     <div class="hero">
-      <div class="live-badge"><div class="live-dot"></div><span>Live Tournament</span></div>
-      <h1><span contenteditable="${editMode}" id="heroName" spellcheck="false">${state.name}</span><span class="season" contenteditable="${editMode}" id="heroSeason" spellcheck="false">${state.season}</span></h1>
-      <p>Eight clubs. Two groups. One trophy. Follow every fixture, goal and knockout with live standings — updated in real time.</p>
-      <div class="hero-actions">
-        <button class="btn btn-primary" onclick="navigate('standings')">View Standings →</button>
-        <button class="btn btn-outline" onclick="navigate('${koMode?'knockout':'fixtures'}')">${koMode?'Knockout':'Fixtures'}</button>
+      <div class="hero-top">
+        <div class="hero-copy">
+          <div class="live-badge"><div class="live-dot"></div><span>Live Tournament</span></div>
+          <h1><span contenteditable="${editMode}" id="heroName" spellcheck="false">${state.name}</span><span class="season" contenteditable="${editMode}" id="heroSeason" spellcheck="false">${state.season}</span></h1>
+          <p>Eight clubs. Two groups. One trophy. Follow every fixture, goal and knockout with live standings — updated in real time.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="navigate('standings')">View Standings →</button>
+            <button class="btn btn-outline" onclick="navigate('${koMode?'knockout':'fixtures'}')">${koMode?'Knockout':'Fixtures'}</button>
+          </div>
+        </div>
+        <div class="hero-logo">
+          <img src="${TOURNAMENT_LOGO}" alt="Titans Super Cup logo">
+        </div>
       </div>
     </div>
 
@@ -1388,7 +1485,7 @@ function renderMatchModal(id){
       <span class="match-time-label">Kick-off</span>
       ${editMode
         ? `<input class="match-time-input" id="matchTimeInput" type="text" data-time-id="${id}" value="${matchTime.replace(/"/g,'&quot;')}" placeholder="e.g. 1 Aug · 10:30">`
-        : `<span class="match-time-value">${matchTime || 'Time TBD'}</span>`}
+        : `<span class="match-time-value">TIME : ${matchTime || 'TBD'}</span>`}
     </div>`;
 
   const addForm = (editMode && ctx.ready) ? `
@@ -1504,7 +1601,7 @@ function renderFixtureCard(m){
       <div class="ticket-foot">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         Round ${m.r+1}
-        <span class="ticket-foot-time">${when || 'Time TBD'}</span>
+        <span class="ticket-foot-time">TIME : ${when || 'TBD'}</span>
       </div>
     </div>`;
 }
@@ -1788,6 +1885,36 @@ function renderRules(){
   `;
 }
 
+function renderAdmin(){
+  if(editMode){
+    return `
+      <div class="admin-wrap">
+        <div class="admin-card admin-unlocked">
+          <h1>Admin</h1>
+          <div class="admin-status-line">● Editing unlocked</div>
+          <p>You can update teams, scores, scorers, and rules on every page. Lock again when finished.</p>
+          <button class="admin-lock-btn" id="adminLockBtn" type="button">Lock editing</button>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="admin-wrap">
+      <div class="admin-card">
+        <h1>Admin Login</h1>
+        <form id="adminLoginForm" autocomplete="off">
+          <div class="admin-field">
+            <label for="adminPin">Password</label>
+            <input id="adminPin" type="password" inputmode="numeric" maxlength="32" placeholder="" autocomplete="current-password">
+          </div>
+          <div class="admin-error" id="adminError"></div>
+          <button class="admin-signin" type="submit">Sign In</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
 // ---- Master render ----
 function render(){
   buildNav();
@@ -1803,9 +1930,9 @@ function render(){
   else if(page==='knockout') app.innerHTML = renderKnockout();
   else if(page==='stats') app.innerHTML = renderStats();
   else if(page==='rules') app.innerHTML = renderRules();
+  else if(page==='admin') app.innerHTML = renderAdmin();
 
   wireEvents();
-  updateLockButton();
   document.body.style.overflow = (openMatchId || openTeamIdx!==null) ? 'hidden' : '';
 }
 
@@ -1947,6 +2074,31 @@ function wireEvents(){
   // rules
   const rulesEdit = document.getElementById('rulesEdit');
   if(rulesEdit) rulesEdit.addEventListener('input', e=>{ state.rules = e.target.value; scheduleSave(); });
+
+  // admin unlock / lock
+  const loginForm = document.getElementById('adminLoginForm');
+  if(loginForm){
+    const pinInput = document.getElementById('adminPin');
+    const errEl = document.getElementById('adminError');
+    if(pinInput) pinInput.focus();
+    loginForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const p = (pinInput?.value || '').trim();
+      if(p===EDIT_PIN){ editMode=true; render(); }
+      else{
+        if(errEl) errEl.textContent = 'Incorrect PIN.';
+        if(pinInput){ pinInput.value=''; pinInput.focus(); }
+      }
+    });
+  }
+  const lockBtn = document.getElementById('adminLockBtn');
+  if(lockBtn) lockBtn.addEventListener('click', ()=>{
+    editMode=false;
+    if(docRef){
+      docRef.get().then(snap=>{ if(snap.exists) applyRemoteData(snap.data()); }).catch(()=>{});
+    }
+    render();
+  });
 }
 
 document.addEventListener('keydown', e=>{
@@ -1968,27 +2120,6 @@ function seedFromStandings(){
   scheduleSave();
   render();
 }
-
-// ---- Edit lock ----
-function updateLockButton(){
-  const btn = document.getElementById('editToggle');
-  if(editMode){ btn.textContent='🔓 Editing — tap to lock'; btn.classList.add('unlocked'); }
-  else{ btn.textContent='🔒 View only — tap to edit'; btn.classList.remove('unlocked'); }
-}
-document.getElementById('editToggle').addEventListener('click', ()=>{
-  if(!editMode){
-    const p = prompt('Enter edit PIN:');
-    if(p===null) return;
-    if(p===EDIT_PIN) editMode=true; else { alert('Incorrect PIN.'); return; }
-  } else {
-    editMode=false;
-    // Pull latest from Firestore when locking
-    if(docRef){
-      docRef.get().then(snap=>{ if(snap.exists) applyRemoteData(snap.data()); }).catch(()=>{});
-    }
-  }
-  render();
-});
 
 loadState();
 </script>
