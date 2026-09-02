@@ -435,6 +435,8 @@ input,select,textarea{font-family:inherit;}
 .qr-box img{max-width:180px; width:100%; border-radius:8px; background:#fff; padding:8px;}
 .qr-box .qr-hint{font-size:11.5px; color:var(--chalk-dim); margin-top:8px;}
 .qr-box .qr-missing{font-size:13px; color:var(--chalk-dim); margin:0; line-height:1.5;}
+.qr-admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media(max-width:760px){.qr-admin-grid{grid-template-columns:1fr;}}
 .qr-admin-card{display:flex; flex-direction:column; gap:10px; padding:14px; background:var(--panel-soft); border:1px solid var(--line); border-radius:10px;}
 .qr-admin-actions{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
 .qr-admin-status{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--chalk-dim);}
@@ -597,6 +599,7 @@ let settings = {
   registrationCloseDate:'',
   registrationCloseTime:'23:59',
   qrUrl:'',
+  managerQrUrl:'',
   photoRequired:true,
   auctionDeskVisible:true,
   nextSerial:1,
@@ -628,7 +631,8 @@ function roleLabel(role){
   return role === 'manager' ? 'Manager' : 'Player';
 }
 let regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'online', submitting:false, msg:null };
-let adminState = { tab:'players', search:'', statusFilter:'all', editPlayer:null, settingsDraft:null, qrFile:null, qrPreview:'', qrUrlDraft:null, qrRemoved:false, loginErr:'', settingsMsg:null };
+function emptyQrDraft(){ return { file:null, preview:'', urlDraft:null, removed:false }; }
+let adminState = { tab:'players', search:'', statusFilter:'all', editPlayer:null, settingsDraft:null, qrByKind:{ player:emptyQrDraft(), manager:emptyQrDraft() }, loginErr:'', settingsMsg:null };
 
 /* Face-focused photo cropper (portrait 7:8) */
 const PHOTO_CROP_OUT_W = 420;
@@ -687,41 +691,84 @@ async function uploadToCloudinary(file){
   }
   return data.secure_url;
 }
-function currentQrUrl(){
-  if(adminState.qrRemoved) return '';
-  if(adminState.qrPreview) return adminState.qrPreview;
-  const draft = adminState.qrUrlDraft;
-  if(draft !== null && draft !== undefined) return String(draft).trim();
-  return String(settings.qrUrl||'').trim();
+function qrSettingsKey(kind){ return kind === 'manager' ? 'managerQrUrl' : 'qrUrl'; }
+function qrDraft(kind){
+  if(!adminState.qrByKind[kind]) adminState.qrByKind[kind] = emptyQrDraft();
+  return adminState.qrByKind[kind];
 }
-function clearAdminQr(){
-  adminState.qrFile = null;
-  adminState.qrPreview = '';
-  adminState.qrUrlDraft = '';
-  adminState.qrRemoved = true;
-  adminState.settingsMsg = {type:'ok', text:'QR cleared in the form — click Save Settings to apply.'};
+function publishedQrUrl(kind){
+  return String(settings[qrSettingsKey(kind)]||'').trim();
+}
+function qrUrlForRole(role){
+  return publishedQrUrl(role === 'manager' ? 'manager' : 'player');
+}
+function currentQrUrl(kind){
+  const d = qrDraft(kind);
+  if(d.removed) return '';
+  if(d.preview) return d.preview;
+  if(d.urlDraft !== null && d.urlDraft !== undefined) return String(d.urlDraft).trim();
+  return publishedQrUrl(kind);
+}
+function clearAdminQr(kind){
+  adminState.qrByKind[kind] = { file:null, preview:'', urlDraft:'', removed:true };
+  adminState.settingsMsg = {type:'ok', text:(kind==='manager'?'Manager':'Player')+' QR cleared in the form — click Save Settings to apply.'};
   render();
 }
-function useQrImageUrl(){
-  const el = document.getElementById('setQrUrl');
+function useQrImageUrl(kind){
+  const el = document.getElementById(kind==='manager' ? 'setQrUrl-manager' : 'setQrUrl-player');
   if(!el) return;
   const url = (el.value||'').trim();
+  const label = kind==='manager' ? 'Manager' : 'Player';
   if(!url){
-    adminState.settingsMsg = {type:'err', text:'Paste a public image URL for the QR code first.'};
+    adminState.settingsMsg = {type:'err', text:'Paste a public image URL for the '+label+' QR code first.'};
     render();
     return;
   }
   if(!/^https?:\/\//i.test(url)){
-    adminState.settingsMsg = {type:'err', text:'QR image URL must start with http:// or https://'};
+    adminState.settingsMsg = {type:'err', text:label+' QR image URL must start with http:// or https://'};
     render();
     return;
   }
-  adminState.qrFile = null;
-  adminState.qrPreview = '';
-  adminState.qrUrlDraft = url;
-  adminState.qrRemoved = false;
-  adminState.settingsMsg = {type:'ok', text:'QR URL set in the form — click Save Settings to apply.'};
+  adminState.qrByKind[kind] = { file:null, preview:'', urlDraft:url, removed:false };
+  adminState.settingsMsg = {type:'ok', text:label+' QR URL set in the form — click Save Settings to apply.'};
   render();
+}
+function setAdminQrFile(kind, file){
+  const label = kind==='manager' ? 'Manager' : 'Player';
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024){
+    adminState.settingsMsg = {type:'err', text:label+' QR image must be under 5MB.'};
+    render();
+    return;
+  }
+  const d = { file, preview:'', urlDraft:null, removed:false };
+  adminState.qrByKind[kind] = d;
+  const reader = new FileReader();
+  reader.onload = ev=>{ d.preview = ev.target.result; adminState.settingsMsg = {type:'ok', text:'New '+label+' QR selected — click Save Settings to publish it.'}; render(); };
+  reader.readAsDataURL(file);
+}
+async function resolveQrUrlFromAdmin(kind){
+  const d = qrDraft(kind);
+  const label = kind==='manager' ? 'Manager' : 'Player';
+  let qrUrl = publishedQrUrl(kind);
+  const input = document.getElementById(kind==='manager' ? 'setQrUrl-manager' : 'setQrUrl-player');
+  const pastedQr = input ? (input.value||'').trim() : '';
+  if(d.removed && !d.file && !pastedQr && !(d.urlDraft && String(d.urlDraft).trim())){
+    return '';
+  }
+  if(d.file){
+    return await uploadToCloudinary(d.file);
+  }
+  if(pastedQr){
+    if(!/^https?:\/\//i.test(pastedQr)){
+      throw new Error(label+' QR image URL must start with http:// or https://');
+    }
+    return pastedQr;
+  }
+  if(d.urlDraft !== null && d.urlDraft !== undefined){
+    return String(d.urlDraft).trim();
+  }
+  return qrUrl;
 }
 
 function initFirebase(){
@@ -1398,8 +1445,8 @@ function renderRegister(){
         </div>
         ${regState.method==='online' ? `
           <div class="qr-box">
-            ${settings.qrUrl ? `<img src="${escapeHtml(settings.qrUrl)}" alt="Payment QR code" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="qr-missing" style="display:none;">QR image failed to load. Ask the organizer to re-upload it in Admin → Settings.</div>` : `<div class="qr-missing">Payment QR is not set yet. Organizer: open Admin → Settings → upload or paste a QR image, then Save Settings. Or choose Pay Cash.</div>`}
-            <div class="qr-hint">Scan to pay ₹${feeNow}, then upload your payment receipt below.</div>
+            ${qrUrlForRole(regState.role) ? `<img src="${escapeHtml(qrUrlForRole(regState.role))}" alt="${isManager?'Manager':'Player'} payment QR" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="qr-missing" style="display:none;">${isManager?'Manager':'Player'} QR image failed to load. Ask the organizer to re-upload it in Admin → Settings.</div>` : `<div class="qr-missing">${isManager?'Manager':'Player'} payment QR is not set yet. Organizer: open Admin → Settings and upload a separate QR for ${isManager?'managers':'players'}, then Save Settings. Or choose Pay Cash.</div>`}
+            <div class="qr-hint">Scan the ${isManager?'manager':'player'} QR to pay ₹${feeNow}, then upload your payment receipt below.</div>
           </div>
           <div class="field">
             <label>Payment Receipt *</label>
@@ -1823,6 +1870,43 @@ function onEditRoleChange(role){
   if(posField) posField.style.display = role === 'manager' ? 'none' : '';
 }
 
+function renderQrAdminCard(kind, title, feeText){
+  const url = currentQrUrl(kind);
+  const d = qrDraft(kind);
+  const saved = publishedQrUrl(kind);
+  const urlInputVal = d.urlDraft!==null && d.urlDraft!==undefined ? d.urlDraft : (d.removed ? '' : saved);
+  const fileId = kind==='manager' ? 'qrFile-manager' : 'qrFile-player';
+  const urlId = kind==='manager' ? 'setQrUrl-manager' : 'setQrUrl-player';
+  const pending = !!(d.file || (d.urlDraft && String(d.urlDraft).trim()));
+  const liveWho = kind==='manager' ? 'managers' : 'players';
+  const status = url
+    ? (pending ? 'New QR ready — Save Settings to publish' : 'Live on register form for '+liveWho)
+    : 'No '+kind+' QR published — '+liveWho+' will not see a code';
+  return `
+        <div class="qr-admin-card">
+          <label style="margin:0;">${title}</label>
+          <div class="hint" style="margin:0;">${feeText}</div>
+          <div class="qr-admin-status ${url?'ok':'warn'}">${status}</div>
+          ${url ? `<img class="qr-admin-preview" src="${escapeHtml(url)}" alt="${title} preview" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'hint',textContent:'Preview failed — URL may be invalid'}))">` : `<div class="hint" style="margin:0;">No QR selected yet.</div>`}
+          <div class="qr-admin-actions">
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('${fileId}').click()">${url ? 'Replace QR image' : 'Upload QR image'}</button>
+            ${url ? `<button type="button" class="btn btn-outline" onclick="clearAdminQr('${kind}')">Remove QR</button>` : ''}
+          </div>
+          <div class="photo-drop" onclick="document.getElementById('${fileId}').click()" style="margin:0;">
+            <div style="font-size:13px; color:var(--chalk-dim);">${d.file ? escapeHtml(d.file.name) : 'Or tap here to choose a QR image (JPG/PNG)'}</div>
+          </div>
+          <input type="file" id="${fileId}" accept="image/*" style="display:none">
+          <div class="field" style="margin:0;">
+            <label style="margin-top:4px;">Or paste QR image URL</label>
+            <input type="url" id="${urlId}" value="${escapeHtml(urlInputVal)}" placeholder="https://…/upi-qr.png">
+            <div class="qr-admin-actions" style="margin-top:8px;">
+              <button type="button" class="btn btn-outline" onclick="useQrImageUrl('${kind}')">Use this URL</button>
+            </div>
+            <div class="hint">Use this if Cloudinary upload fails. Must be a publicly reachable image link.</div>
+          </div>
+        </div>`;
+}
+
 function renderAdminSettings(){
   const s = settings;
   const msg = adminState.settingsMsg;
@@ -1856,29 +1940,13 @@ function renderAdminSettings(){
         <div>Show Auction Desk <div class="sub">When off, the Auction Desk link is hidden from the public site.</div></div>
         <button class="switch ${s.auctionDeskVisible!==false?'on':''}" onclick="toggleAuctionDeskVisible()"></button>
       </div>
-      <div class="field">
-        <label>Payment QR Code</label>
-        <div class="qr-admin-card">
-          <div class="qr-admin-status ${currentQrUrl()?'ok':'warn'}">${currentQrUrl() ? (adminState.qrFile || adminState.qrUrlDraft ? 'New QR ready — Save Settings to publish' : 'Live on register form') : 'No QR published — players will not see a code'}</div>
-          ${currentQrUrl() ? `<img class="qr-admin-preview" src="${escapeHtml(currentQrUrl())}" alt="QR preview" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'hint',textContent:'Preview failed — URL may be invalid'}))">` : `<div class="hint" style="margin:0;">No QR selected yet.</div>`}
-          <div class="qr-admin-actions">
-            <button type="button" class="btn btn-outline" onclick="document.getElementById('qrFile').click()">${currentQrUrl() ? 'Replace QR image' : 'Upload QR image'}</button>
-            ${currentQrUrl() ? `<button type="button" class="btn btn-outline" onclick="clearAdminQr()">Remove QR</button>` : ''}
-          </div>
-          <div class="photo-drop" onclick="document.getElementById('qrFile').click()" style="margin:0;">
-            <div style="font-size:13px; color:var(--chalk-dim);">${adminState.qrFile ? escapeHtml(adminState.qrFile.name) : 'Or tap here to choose a QR image (JPG/PNG)'}</div>
-          </div>
-          <input type="file" id="qrFile" accept="image/*" style="display:none">
-          <div class="field" style="margin:0;">
-            <label style="margin-top:4px;">Or paste QR image URL</label>
-            <input type="url" id="setQrUrl" value="${escapeHtml(adminState.qrUrlDraft!==null && adminState.qrUrlDraft!==undefined ? adminState.qrUrlDraft : (adminState.qrRemoved ? '' : (settings.qrUrl||'')))}" placeholder="https://…/upi-qr.png">
-            <div class="qr-admin-actions" style="margin-top:8px;">
-              <button type="button" class="btn btn-outline" onclick="useQrImageUrl()">Use this URL</button>
-            </div>
-            <div class="hint">Use this if Cloudinary upload fails. Must be a publicly reachable image link.</div>
-          </div>
+      <div class="field" style="grid-column:1 / -1;">
+        <label>Payment QR Codes</label>
+        <div class="qr-admin-grid">
+          ${renderQrAdminCard('player', 'Player QR', `Shown when registering as Player — fee ₹${settings.fee}`)}
+          ${renderQrAdminCard('manager', 'Manager QR', `Shown when registering as Manager — fee ₹${managerFeeAmount()}`)}
         </div>
-        <div class="hint">Shown on Register → Pay Online. After changing, click Save Settings.</div>
+        <div class="hint">Each role uses its own QR because the amounts are different. After changing, click Save Settings.</div>
       </div>
       <button class="btn btn-primary" onclick="saveAdminSettings()" style="margin-top:6px;">Save Settings</button>
     </div>`;
@@ -1955,32 +2023,17 @@ async function saveAdminSettings(){
     render(); return;
   }
 
-  let qrUrl = settings.qrUrl || '';
-  const qrUrlInput = document.getElementById('setQrUrl');
-  const pastedQr = qrUrlInput ? (qrUrlInput.value||'').trim() : '';
-  if(adminState.qrRemoved && !adminState.qrFile && !pastedQr && !(adminState.qrUrlDraft && String(adminState.qrUrlDraft).trim())){
-    qrUrl = '';
-  }else if(adminState.qrFile){
-    /* upload below */
-  }else if(pastedQr){
-    if(!/^https?:\/\//i.test(pastedQr)){
-      adminState.settingsMsg = {type:'err', text:'QR image URL must start with http:// or https://'};
-      render(); return;
-    }
-    qrUrl = pastedQr;
-  }else if(adminState.qrUrlDraft !== null && adminState.qrUrlDraft !== undefined){
-    qrUrl = String(adminState.qrUrlDraft).trim();
-  }
   try{
-    if(adminState.qrFile){
-      qrUrl = await uploadToCloudinary(adminState.qrFile);
-    }
-    await saveSettings({name, seasonLabel, fee, managerFee, maxSlots, maxTeams, tournamentDate, tournamentTime, venue, venueUrl, qrUrl, registrationCloseDate, registrationCloseTime});
-    adminState.qrFile = null;
-    adminState.qrPreview = '';
-    adminState.qrUrlDraft = null;
-    adminState.qrRemoved = false;
-    adminState.settingsMsg = {type:'ok', text: qrUrl ? 'Settings saved. Payment QR is live on the Register page.' : 'Settings saved. No payment QR is set — Pay Online will show a missing-QR message.'};
+    const qrUrl = await resolveQrUrlFromAdmin('player');
+    const managerQrUrl = await resolveQrUrlFromAdmin('manager');
+    await saveSettings({name, seasonLabel, fee, managerFee, maxSlots, maxTeams, tournamentDate, tournamentTime, venue, venueUrl, qrUrl, managerQrUrl, registrationCloseDate, registrationCloseTime});
+    adminState.qrByKind = { player:emptyQrDraft(), manager:emptyQrDraft() };
+    const parts = [];
+    if(qrUrl) parts.push('player QR live');
+    else parts.push('no player QR');
+    if(managerQrUrl) parts.push('manager QR live');
+    else parts.push('no manager QR');
+    adminState.settingsMsg = {type:'ok', text:'Settings saved. '+parts.join(' · ')+'.'};
     render();
   }catch(e){
     console.error(e);
@@ -2385,21 +2438,17 @@ function wireEvents(){
     });
   }
 
-  const qrFileInput = document.getElementById('qrFile');
-  if(qrFileInput) qrFileInput.addEventListener('change', e=>{
+  const qrPlayerInput = document.getElementById('qrFile-player');
+  if(qrPlayerInput) qrPlayerInput.addEventListener('change', e=>{
     const f = e.target.files[0];
     if(!f) return;
-    if(f.size > 5 * 1024 * 1024){
-      adminState.settingsMsg = {type:'err', text:'QR image must be under 5MB.'};
-      render();
-      return;
-    }
-    adminState.qrFile = f;
-    adminState.qrRemoved = false;
-    adminState.qrUrlDraft = null;
-    const reader = new FileReader();
-    reader.onload = ev=>{ adminState.qrPreview = ev.target.result; adminState.settingsMsg = {type:'ok', text:'New QR selected — click Save Settings to publish it.'}; render(); };
-    reader.readAsDataURL(f);
+    setAdminQrFile('player', f);
+  });
+  const qrManagerInput = document.getElementById('qrFile-manager');
+  if(qrManagerInput) qrManagerInput.addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    setAdminQrFile('manager', f);
   });
 }
 
