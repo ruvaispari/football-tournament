@@ -552,7 +552,10 @@ footer{display:flex; align-items:center; justify-content:space-between; padding:
       <div class="foot-text" id="footText">© Tournament Registration</div>
       <div class="fb-status wait" id="fbStatus">Connecting to Firebase…</div>
     </div>
-    <a class="btn small" id="auctionDeskLink" href="tournament-auction.html">Auction Desk →</a>
+    <div class="foot-links" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a class="btn small" href="index.html">Tournament Tracker</a>
+      <a class="btn small" id="auctionDeskLink" href="tournament-auction.html">Auction Desk →</a>
+    </div>
   </footer>
 </div>
 <div id="photoCropRoot"></div>
@@ -1036,6 +1039,8 @@ function renderHome(){
           <div class="hero-actions">
             <button class="btn btn-primary" onclick="navigate('register')" ${open?'':'disabled'}>${open?'Register Now →':'Registration Closed'}</button>
             <button class="btn btn-outline" onclick="navigate('players')">View Player List</button>
+            <a class="btn btn-outline" href="index.html">Tournament Tracker</a>
+            ${settings.auctionDeskVisible===false ? '' : '<a class="btn btn-outline" href="tournament-auction.html">Auction Desk</a>'}
           </div>
         </div>
         ${registrationDeadlineHtml()}

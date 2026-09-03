@@ -331,7 +331,10 @@ footer{display:flex; align-items:center; justify-content:space-between; padding:
       <div class="foot-text" id="footText">© Auction Desk</div>
       <div class="fb-status wait" id="fbStatus">Connecting to Firebase…</div>
     </div>
-    <a class="btn small" href="tournament-registration.html">← Registration</a>
+    <div class="export-row">
+      <a class="btn small" href="tournament-registration.html">← Registration</a>
+      <a class="btn small" href="index.html">Tracker →</a>
+    </div>
   </footer>
 </div>
 
@@ -350,6 +353,7 @@ const firebaseConfig = {
 const PLAYERS_COLLECTION = 'players';
 const SETTINGS_PATH = { collection:'config', id:'tournament' };
 const AUCTION_PATH = { collection:'config', id:'auction' };
+const TRACKER_PATH = { collection:'tournaments', id:'live' };
 const EDIT_PIN = "2580";
 const CLOUDINARY = { cloudName:'kxhnbi19', uploadPreset:'tournament_unsigned' };
 const TOURNAMENT_LOGO = 'titans-super-cup-logo.png';
@@ -505,6 +509,66 @@ async function persistAuction(extra){
   if(payload.history && payload.history.length > 500) payload.history = payload.history.slice(-500);
   auction = payload;
   await db.collection(AUCTION_PATH.collection).doc(AUCTION_PATH.id).set(payload, { merge:false });
+  schedulePublishToTracker();
+}
+
+let publishTimer = null;
+function rosterFromAuctionTeam(t){
+  const list = [];
+  if(t.iconPlayerId){
+    const p = playerById(t.iconPlayerId);
+    list.push({
+      name: (p && p.name) || 'Icon player',
+      position: (p && p.position) || '',
+      photoUrl: (p && p.photoUrl) || '',
+      role: 'icon',
+      playerId: t.iconPlayerId
+    });
+  }
+  (t.squad||[]).forEach(s=>{
+    const p = s.playerId ? playerById(s.playerId) : null;
+    list.push({
+      name: s.name || (p && p.name) || 'Player',
+      position: s.position || (p && p.position) || '',
+      photoUrl: s.photoUrl || (p && p.photoUrl) || '',
+      role: 'player',
+      playerId: s.playerId || '',
+      price: s.price
+    });
+  });
+  return list;
+}
+function schedulePublishToTracker(){
+  clearTimeout(publishTimer);
+  publishTimer = setTimeout(()=>{
+    publishSquadsToTracker().catch(e=>console.warn('tracker publish', e));
+  }, 400);
+}
+async function publishSquadsToTracker(){
+  if(!db) return;
+  const teamsIn = auction.teams || [];
+  if(!teamsIn.length) return;
+  const settingsN = Number(tournamentSettings && tournamentSettings.maxTeams);
+  const n = Math.max(2, Math.min(16, Number.isFinite(settingsN) && settingsN >= 2 ? settingsN : teamsIn.length));
+  const teams = Array.from({length: n}, (_,i)=>`Team ${i+1}`);
+  const rosters = {};
+  const teamLogos = {};
+  teamsIn.slice(0, n).forEach((t,i)=>{
+    teams[i] = String(t.name||'').trim() || teams[i];
+    rosters[String(i)] = rosterFromAuctionTeam(t);
+    if(t.logoUrl) teamLogos[String(i)] = t.logoUrl;
+  });
+  const patch = {
+    teams,
+    rosters,
+    teamLogos,
+    layoutKey: n + ':' + Math.ceil(n/2) + '-' + Math.floor(n/2),
+    auctionImportedAt: Date.now(),
+    auctionStatus: auction.status || '',
+    updatedAt: Date.now()
+  };
+  if(auction.competitionName) patch.name = auction.competitionName;
+  await db.collection(TRACKER_PATH.collection).doc(TRACKER_PATH.id).set(patch, { merge:true });
 }
 
 /* ---------- Player helpers ---------- */
@@ -637,6 +701,7 @@ function renderHome(){
       <div class="stat-card"><div class="stat-label">Teams</div><div class="stat-value">${(auction.teams||[]).length}</div></div>
       <div class="stat-card"><div class="stat-label">Sold / Unsold</div><div class="stat-value green">${(auction.sold||[]).length} <span style="color:var(--chalk-dim);font-size:18px;">/</span> <span class="red">${(auction.unsold||[]).length}</span></div></div>
     </div>
+    ${auction.status==='completed' ? `<div class="card" style="margin-top:14px;"><div class="form-msg ok">Auction complete. Team names and squads are sent to the tournament tracker.</div><div class="export-row" style="margin-top:12px;"><a class="btn btn-primary" href="index.html">Open Tournament Tracker →</a><button class="btn" onclick="publishSquadsToTracker().then(()=>alert('Squads sent to tracker.')).catch(e=>alert(e.message))">Resend squads to Tracker</button></div></div>` : `<div class="export-row" style="margin-top:14px;"><a class="btn" href="index.html">Tournament Tracker →</a></div>`}
     ${renderHomeManagers()}
     <div class="card" style="margin-top:14px;">
       <h2>Players from registration</h2>
@@ -1242,6 +1307,8 @@ function renderSummary(){
         <button class="btn" onclick="exportExcel()">Excel</button>
         <button class="btn" onclick="exportCSV()">CSV</button>
         <button class="btn" onclick="exportJSON()">JSON</button>
+        <button class="btn btn-green" onclick="publishSquadsToTracker().then(()=>alert('Team names and squads sent to the tournament tracker.')).catch(e=>alert(e.message))">Send squads to Tracker</button>
+        <a class="btn" href="index.html">Open Tracker →</a>
       </div>
     </div>`;
 }
@@ -1420,6 +1487,7 @@ function renderDeskClosed(){
       <div class="page-sub" style="margin:16px 0 0;">If you are an admin, sign in to access the desk while it stays hidden from the public.</div>
       <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <a class="btn btn-outline" href="tournament-registration.html">← Back to Registration</a>
+        <a class="btn btn-outline" href="index.html">Tournament Tracker</a>
         <button class="btn btn-primary" onclick="navigate('admin')">Admin Sign In</button>
       </div>
     </div>`;
