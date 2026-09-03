@@ -698,8 +698,8 @@ footer{display:flex; align-items:center; justify-content:space-between; padding:
       <div class="fb-status wait" id="fbStatus">Connecting to Firebase…</div>
     </div>
     <div class="foot-links">
-      <a class="btn btn-outline small" href="tournament-registration.html">Registration</a>
-      <a class="btn btn-outline small" id="auctionDeskLink" href="tournament-auction.html">Auction Desk</a>
+      <a class="btn btn-outline small" href="tournament-registration.html">← Registration</a>
+      <a class="btn btn-outline small" href="index.html">Tracker →</a>
     </div>
   </footer>
 </div>
@@ -1088,9 +1088,6 @@ function importFromAuctionDesk(){
     scheduleSave();
     render();
   }
-}
-function auctionDeskPublic(){
-  return !(tournamentSettings && tournamentSettings.auctionDeskVisible===false);
 }
 function auctionSyncLabel(){
   if(!auctionLive) return 'Waiting for Auction Desk…';
@@ -1734,8 +1731,6 @@ function renderHome(){
           <div class="hero-actions">
             <button class="btn btn-primary" onclick="navigate('standings')">View Standings →</button>
             <button class="btn btn-outline" onclick="navigate('${koMode?'knockout':'fixtures'}')">${koMode?'Knockout':'Fixtures'}</button>
-            <a class="btn btn-outline" href="tournament-registration.html">Registration</a>
-            ${auctionDeskPublic() ? '<a class="btn btn-outline" href="tournament-auction.html">Auction Desk</a>' : ''}
           </div>
         </div>
         <div class="hero-logo">
@@ -1772,8 +1767,6 @@ function renderHome(){
       <div class="nav-card" onclick="navigate('knockout')"><div class="nav-card-label">🏆 Knockout</div><div class="chev">›</div></div>
       <div class="nav-card" onclick="navigate('stats')"><div class="nav-card-label">🎯 Top Scorers</div><div class="chev">›</div></div>
       <div class="nav-card" onclick="navigate('rules')"><div class="nav-card-label">📋 Rules</div><div class="chev">›</div></div>
-      <a class="nav-card" href="tournament-registration.html"><div class="nav-card-label">📝 Registration</div><div class="chev">›</div></a>
-      ${auctionDeskPublic() ? '<a class="nav-card" href="tournament-auction.html"><div class="nav-card-label">🔨 Auction Desk</div><div class="chev">›</div></a>' : ''}
     </div>
   `;
 }
@@ -2312,8 +2305,6 @@ function render(){
   document.getElementById('brandName').textContent = state.name;
   document.getElementById('brandSeason').textContent = 'SEASON ' + state.season;
   document.getElementById('footText').textContent = `© ${state.name} ${state.season} · Live tournament tracker`;
-  const auctionLink = document.getElementById('auctionDeskLink');
-  if(auctionLink) auctionLink.style.display = (tournamentSettings && tournamentSettings.auctionDeskVisible===false) ? 'none' : '';
 
   const app = document.getElementById('app');
   if(page==='home') app.innerHTML = renderHome();

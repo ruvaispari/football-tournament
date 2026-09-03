@@ -701,7 +701,7 @@ function renderHome(){
       <div class="stat-card"><div class="stat-label">Teams</div><div class="stat-value">${(auction.teams||[]).length}</div></div>
       <div class="stat-card"><div class="stat-label">Sold / Unsold</div><div class="stat-value green">${(auction.sold||[]).length} <span style="color:var(--chalk-dim);font-size:18px;">/</span> <span class="red">${(auction.unsold||[]).length}</span></div></div>
     </div>
-    ${auction.status==='completed' ? `<div class="card" style="margin-top:14px;"><div class="form-msg ok">Auction complete. Team names and squads are sent to the tournament tracker.</div><div class="export-row" style="margin-top:12px;"><a class="btn btn-primary" href="index.html">Open Tournament Tracker →</a><button class="btn" onclick="publishSquadsToTracker().then(()=>alert('Squads sent to tracker.')).catch(e=>alert(e.message))">Resend squads to Tracker</button></div></div>` : `<div class="export-row" style="margin-top:14px;"><a class="btn" href="index.html">Tournament Tracker →</a></div>`}
+    ${auction.status==='completed' ? `<div class="card" style="margin-top:14px;"><div class="form-msg ok">Auction complete. Team names and squads are sent to the tournament tracker.</div><div class="export-row" style="margin-top:12px;"><button class="btn" onclick="publishSquadsToTracker().then(()=>alert('Squads sent to tracker.')).catch(e=>alert(e.message))">Resend squads to Tracker</button></div></div>` : ''}
     ${renderHomeManagers()}
     <div class="card" style="margin-top:14px;">
       <h2>Players from registration</h2>
@@ -1308,7 +1308,6 @@ function renderSummary(){
         <button class="btn" onclick="exportCSV()">CSV</button>
         <button class="btn" onclick="exportJSON()">JSON</button>
         <button class="btn btn-green" onclick="publishSquadsToTracker().then(()=>alert('Team names and squads sent to the tournament tracker.')).catch(e=>alert(e.message))">Send squads to Tracker</button>
-        <a class="btn" href="index.html">Open Tracker →</a>
       </div>
     </div>`;
 }
@@ -1487,7 +1486,6 @@ function renderDeskClosed(){
       <div class="page-sub" style="margin:16px 0 0;">If you are an admin, sign in to access the desk while it stays hidden from the public.</div>
       <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <a class="btn btn-outline" href="tournament-registration.html">← Back to Registration</a>
-        <a class="btn btn-outline" href="index.html">Tournament Tracker</a>
         <button class="btn btn-primary" onclick="navigate('admin')">Admin Sign In</button>
       </div>
     </div>`;
