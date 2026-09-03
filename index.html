@@ -43,6 +43,7 @@ button{font-family:inherit;}
   display:flex; align-items:center; justify-content:space-between;
   max-width:1060px; margin:0 auto; padding: 18px 16px;
   border-bottom:1px solid var(--line);
+  gap:12px; flex-wrap:wrap;
 }
 .brand{display:flex; align-items:center; gap:12px; cursor:pointer;}
 .brand-icon{
@@ -59,14 +60,14 @@ button{font-family:inherit;}
 }
 .brand-name{font-family:'Teko', sans-serif; font-weight:700; font-size:22px; letter-spacing:0.02em; text-transform:uppercase; line-height:1;}
 .brand-sub{font-family:'JetBrains Mono', monospace; font-size:9px; letter-spacing:0.22em; color:var(--floodlight); text-transform:uppercase; margin-top:3px;}
-.nav-links{display:flex; gap:22px;}
+.nav-links{display:flex; gap:8px; flex-wrap:wrap;}
 .nav-links button{
-  background:none; border:none; color:var(--chalk-dim); font-family:'JetBrains Mono', monospace;
-  font-size:11px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; padding:4px 0;
-  border-bottom:2px solid transparent;
+  background:var(--panel-solid); border:1px solid var(--line); color:var(--chalk-dim);
+  font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  padding:8px 12px; border-radius:999px; cursor:pointer;
 }
-.nav-links button:hover{color:var(--chalk);}
-.nav-links button.active{color:var(--floodlight); border-color:var(--floodlight);}
+.nav-links button:hover{color:var(--chalk); border-color:var(--chalk-dim);}
+.nav-links button.active{background:var(--floodlight-soft); border-color:var(--floodlight); color:var(--floodlight);}
 .hamburger{display:none; background:none; border:1px solid var(--line); color:var(--chalk); font-size:16px; border-radius:6px; padding:6px 10px; cursor:pointer;}
 .mobile-nav{display:none; flex-direction:column; gap:2px; padding:0 16px 14px;}
 .mobile-nav.open{display:flex;}
@@ -76,7 +77,7 @@ button{font-family:inherit;}
   text-align:left; padding:11px 14px; border-radius:7px; cursor:pointer;
 }
 .mobile-nav button.active{color:var(--floodlight); border-color:var(--floodlight); background:var(--floodlight-soft);}
-@media(max-width:760px){ .nav-links{display:none;} .hamburger{display:block;} }
+@media(max-width:860px){ .nav-links{display:none;} .hamburger{display:block;} }
 
 /* ---- Hero ---- */
 .hero{
@@ -699,7 +700,7 @@ footer{display:flex; align-items:center; justify-content:space-between; padding:
     </div>
     <div class="foot-links">
       <a class="btn btn-outline small" href="tournament-registration.html">← Registration</a>
-      <a class="btn btn-outline small" href="index.html">Tracker →</a>
+      <a class="btn btn-outline small" href="tournament-auction.html">Auction →</a>
     </div>
   </footer>
 </div>
