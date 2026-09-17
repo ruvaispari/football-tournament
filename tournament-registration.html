@@ -356,7 +356,8 @@ input,select,textarea{font-family:inherit;}
 .photo-drop{border:1.5px dashed var(--line); border-radius:10px; padding:18px; text-align:center; cursor:pointer; background:var(--panel-soft);}
 .photo-drop:hover{border-color:var(--amber);}
 .photo-preview{width:84px; height:96px; border-radius:10px; object-fit:cover; margin:0 auto 8px; display:block; border:2px solid var(--turf-edge);}
-.photo-hint{font-size:12px; color:var(--chalk-dim); margin-top:8px; line-height:1.45;}
+.photo-actions{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
+.hidden-file-inputs{position:fixed; left:-100vw; top:0; width:1px; height:1px; opacity:0; overflow:hidden;}
 
 /* Face crop modal */
 .crop-modal .modal-card{max-width:440px;}
@@ -440,6 +441,43 @@ input,select,textarea{font-family:inherit;}
 .qr-box img{max-width:180px; width:100%; border-radius:8px; background:#fff; padding:8px;}
 .qr-box .qr-hint{font-size:11.5px; color:var(--chalk-dim); margin-top:8px;}
 .qr-box .qr-missing{font-size:13px; color:var(--chalk-dim); margin:0; line-height:1.5;}
+.pay-modal .modal-card{max-width:460px; padding:20px 18px 18px;}
+.pay-modal-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:4px;}
+.pay-modal-head h2{margin:0; font-size:26px;}
+.pay-close{width:34px; height:34px; border-radius:50%; background:transparent; border:1.5px solid var(--line); color:var(--chalk); font-size:18px; cursor:pointer; flex-shrink:0;}
+.pay-close:hover{border-color:var(--amber); color:var(--amber);}
+.pay-amount{font-family:'Teko',sans-serif; font-size:38px; color:var(--amber); line-height:1; margin:2px 0 10px;}
+.pay-amount span{font-size:18px; color:var(--chalk-dim); letter-spacing:0.06em;}
+.pay-id-card{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:var(--panel-soft); border:1px solid var(--line); border-radius:10px;
+  padding:12px 12px; margin:0 0 10px;
+}
+.pay-id-card .pay-id-meta{min-width:0;}
+.pay-id-card .pay-id-label{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--chalk-dim);}
+.pay-id-card .pay-id-value{font-size:15px; font-weight:600; word-break:break-all; margin-top:4px;}
+.pay-method-row{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
+.btn.copied{border-color:var(--green); color:var(--green);}
+.pay-steps{
+  list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:8px;
+}
+.pay-steps li{
+  display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start;
+  background:var(--panel-soft); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  font-size:13px; line-height:1.45; color:var(--chalk);
+}
+.pay-steps .step-num{
+  width:28px; height:28px; border-radius:50%; background:var(--amber-soft); border:1px solid var(--amber);
+  color:var(--amber); font-family:'Teko',sans-serif; font-size:16px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.pay-steps strong{color:var(--amber);}
+.pay-alt-qr{margin-top:12px; border-top:1px solid var(--line); padding-top:10px;}
+.pay-alt-qr summary{
+  cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--chalk-dim); list-style:none;
+}
+.pay-alt-qr summary::-webkit-details-marker{display:none;}
 .qr-admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
 @media(max-width:760px){.qr-admin-grid{grid-template-columns:1fr;}}
 .qr-admin-card{display:flex; flex-direction:column; gap:10px; padding:14px; background:var(--panel-soft); border:1px solid var(--line); border-radius:10px;}
@@ -564,6 +602,11 @@ footer{display:flex; align-items:center; justify-content:space-between; padding:
   </footer>
 </div>
 <div id="photoCropRoot"></div>
+<div class="hidden-file-inputs" aria-hidden="true">
+  <input type="file" id="regPhotoCamera" accept="image/*" capture="environment">
+  <input type="file" id="regPhotoGallery" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif">
+  <input type="file" id="regReceiptPersist" accept="image/*,application/pdf">
+</div>
 
 <script>
 /* ============================================================
@@ -608,6 +651,9 @@ let settings = {
   registrationCloseTime:'23:59',
   qrUrl:'',
   managerQrUrl:'',
+  playerUpiId:'',
+  managerUpiId:'',
+  upiMerchantCode:'',
   photoRequired:true,
   auctionDeskVisible:true,
   nextSerial:1,
@@ -628,17 +674,30 @@ function positionLabel(code){
   const found = PLAYER_POSITIONS.find(p=>p && p.value===code);
   return found ? found.label : String(code);
 }
+function parseRupeeAmount(raw){
+  if(typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  const s = String(raw==null?'':raw).trim().replace(/[₹Rs\s]/gi,'').replace(/,/g,'');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
 function managerFeeAmount(){
-  const n = Number(settings.managerFee);
-  return Number.isFinite(n) && n >= 0 ? n : Number(settings.fee)||0;
+  const n = parseRupeeAmount(settings.managerFee);
+  return n >= 0 ? n : parseRupeeAmount(settings.fee);
 }
 function registrationFeeForRole(role){
-  return role === 'manager' ? managerFeeAmount() : (Number(settings.fee)||0);
+  const n = parseRupeeAmount(role === 'manager' ? settings.managerFee : settings.fee);
+  return Math.round(Math.max(0, n) * 100) / 100;
+}
+function upiAmountParam(){
+  const n = registrationFeeForRole(regState.role);
+  if(!Number.isFinite(n) || n < 1) return '';
+  const paise = Math.round(n * 100);
+  return paise % 100 === 0 ? String(Math.round(paise / 100)) : (paise / 100).toFixed(2);
 }
 function roleLabel(role){
   return role === 'manager' ? 'Manager' : 'Player';
 }
-let regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'online', submitting:false, msg:null };
+let regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'', upiApp:'', payModalOpen:false, payError:null, payHint:null, upiCopied:false, submitting:false, msg:null, pickingFile:false };
 function emptyQrDraft(){ return { file:null, preview:'', urlDraft:null, removed:false }; }
 let adminState = { tab:'players', search:'', statusFilter:'all', editPlayer:null, settingsDraft:null, qrByKind:{ player:emptyQrDraft(), manager:emptyQrDraft() }, loginErr:'', settingsMsg:null };
 
@@ -709,6 +768,92 @@ function publishedQrUrl(kind){
 }
 function qrUrlForRole(role){
   return publishedQrUrl(role === 'manager' ? 'manager' : 'player');
+}
+function upiIdForRole(role){
+  const raw = role === 'manager' ? settings.managerUpiId : settings.playerUpiId;
+  return String(raw||'').trim().replace(/\s+/g,'');
+}
+function upiMerchantCode(){
+  return String(settings.upiMerchantCode||'').trim().replace(/\s+/g,'');
+}
+function upiPayeeName(){
+  return String(settings.name||'Tournament').replace(/[^\w\s.-]/g,' ').replace(/\s+/g,' ').trim().slice(0,50) || 'Tournament';
+}
+function upiTxnNote(){
+  const who = String(regState.name||'').replace(/[^\w\s.-]/g,' ').replace(/\s+/g,' ').trim();
+  return ((regState.role==='manager'?'Manager fee':'Player fee') + (who ? ' '+who : '')).slice(0,50);
+}
+/* Build a standard NPCI upi://pay URI. QR scan of this works for personal UPI.
+   Browser deep-links to personal UPI often fail with a fake "limit exceeded" in GPay. */
+function upiPayUri(){
+  const pa = upiIdForRole(regState.role);
+  const amt = upiAmountParam();
+  if(!pa || !amt) return '';
+  const parts = [
+    'pa='+encodeURIComponent(pa),
+    'pn='+encodeURIComponent(upiPayeeName()),
+    'am='+amt,
+    'cu=INR',
+    'tn='+encodeURIComponent(upiTxnNote())
+  ];
+  const mc = upiMerchantCode();
+  if(mc){
+    parts.push('mc='+encodeURIComponent(mc));
+    parts.push('tr='+encodeURIComponent('REG'+Date.now().toString(36).toUpperCase()));
+  }
+  return 'upi://pay?'+parts.join('&');
+}
+function upiGeneratedQrUrl(){
+  const uri = upiPayUri();
+  if(!uri) return '';
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=12&data='+encodeURIComponent(uri);
+}
+async function copyPlainText(text){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(e){}
+  return copyPlainTextSync(text);
+}
+function copyPlainTextSync(text){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly','');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return !!ok;
+  }catch(e){
+    return false;
+  }
+}
+async function copyUpiPaymentDetails(){
+  const pa = upiIdForRole(regState.role);
+  const amt = upiAmountParam() || String(registrationFeeForRole(regState.role));
+  if(!pa){
+    regState.payHint = 'No UPI ID saved. Ask the organizer to add a UPI ID in Admin → Settings.';
+    regState.upiCopied = false;
+    render();
+    return false;
+  }
+  const ok = await copyPlainText(pa);
+  if(!ok){
+    window.prompt('Copy this UPI ID, then pay ₹'+amt+' in your UPI app', pa);
+  }
+  regState.method = 'online';
+  regState.upiCopied = true;
+  regState.upiApp = 'upi';
+  regState.payError = null;
+  regState.payHint = 'Copied. Open any UPI app, pay ₹'+amt+', then upload the screenshot below and submit.';
+  render();
+  return true;
 }
 function currentQrUrl(kind){
   const d = qrDraft(kind);
@@ -1062,7 +1207,7 @@ function renderHome(){
 /* ============================================================
    PUBLIC: REGISTER
    ============================================================ */
-function resetRegForm(){ regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'online', submitting:false, msg:null }; }
+function resetRegForm(){ regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'', upiApp:'', payModalOpen:false, payError:null, payHint:null, upiCopied:false, submitting:false, msg:null, pickingFile:false }; }
 
 /* ---------- Face-focused photo crop ---------- */
 function closePhotoCrop(){
@@ -1072,6 +1217,83 @@ function closePhotoCrop(){
   photoCrop.pinchDist = 0;
   const root = document.getElementById('photoCropRoot');
   if(root) root.innerHTML = '';
+}
+
+function isLikelyImageFile(file){
+  if(!file) return false;
+  const type = String(file.type||'').toLowerCase();
+  if(type.startsWith('image/')) return true;
+  if(!type) return true;
+  return /\.(jpe?g|png|webp|gif|heic|heif|bmp)$/i.test(file.name||'');
+}
+
+function loadHtmlImage(src){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = ()=> resolve(img);
+    img.onerror = ()=> reject(new Error('decode'));
+    img.src = src;
+  });
+}
+
+async function fileToCropDataUrl(file){
+  const objUrl = URL.createObjectURL(file);
+  try{
+    let bitmap = null;
+    if(window.createImageBitmap){
+      try{ bitmap = await createImageBitmap(file, { imageOrientation:'from-image' }); }catch(e){ bitmap = null; }
+    }
+    let w, h, draw;
+    if(bitmap){
+      w = bitmap.width; h = bitmap.height;
+      draw = (ctx, dw, dh)=> ctx.drawImage(bitmap, 0, 0, dw, dh);
+    }else{
+      const img = await loadHtmlImage(objUrl);
+      w = img.naturalWidth; h = img.naturalHeight;
+      draw = (ctx, dw, dh)=> ctx.drawImage(img, 0, 0, dw, dh);
+    }
+    if(!w || !h) throw new Error('empty');
+    const maxSide = 2400;
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+    draw(canvas.getContext('2d'), canvas.width, canvas.height);
+    if(bitmap && bitmap.close) try{ bitmap.close(); }catch(e){}
+    return canvas.toDataURL('image/jpeg', 0.92);
+  }finally{
+    URL.revokeObjectURL(objUrl);
+  }
+}
+
+async function handlePlayerPhotoFile(file){
+  if(!file) return;
+  if(!isLikelyImageFile(file)){
+    alert('Please choose a photo (JPG, PNG, or the phone camera).');
+    return;
+  }
+  syncRegFieldsFromDom();
+  try{
+    const dataUrl = await fileToCropDataUrl(file);
+    openPhotoCrop(dataUrl);
+  }catch(e){
+    alert('Could not read that photo. Use Take Photo, or pick a JPG/PNG from the gallery.');
+  }
+}
+
+function beginFilePick(){
+  syncRegFieldsFromDom();
+  regState.pickingFile = true;
+}
+function endFilePick(){
+  regState.pickingFile = false;
+}
+function openPersistentFile(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  beginFilePick();
+  el.value = '';
+  el.click();
 }
 
 function openPhotoCrop(dataUrl){
@@ -1087,7 +1309,6 @@ function openPhotoCrop(dataUrl){
     photoCrop.x = 0;
     photoCrop.y = 0;
     renderPhotoCropModal();
-    // Fit image to cover the portrait viewport, biased slightly upward for faces
     requestAnimationFrame(()=>{
       const vp = document.getElementById('cropViewport');
       if(!vp) return;
@@ -1097,9 +1318,7 @@ function openPhotoCrop(dataUrl){
       photoCrop.minScale = cover;
       photoCrop.scale = cover * 1.08;
       photoCrop.maxScale = Math.max(cover * 4, 4);
-      // Bias crop upward so faces near top of photo land in the oval
       photoCrop.x = 0;
-      // Nudge upward so faces near the top of a group/selfie land in the oval
       photoCrop.y = Math.min((photoCrop.naturalH * photoCrop.scale - vh) / 2, vh * 0.08);
       clampPhotoCrop();
       updatePhotoCropTransform();
@@ -1156,7 +1375,6 @@ function updatePhotoCropTransform(){
   const vh = vp.clientHeight;
   const dw = photoCrop.naturalW * photoCrop.scale;
   const dh = photoCrop.naturalH * photoCrop.scale;
-  // photoCrop.x/y = offset of image top-left from the cover-centered position
   const baseX = (vw - dw) / 2;
   const baseY = (vh - dh) / 2;
   img.style.width = dw + 'px';
@@ -1172,7 +1390,6 @@ function clampPhotoCrop(){
   const vh = vp.clientHeight;
   const dw = photoCrop.naturalW * photoCrop.scale;
   const dh = photoCrop.naturalH * photoCrop.scale;
-  // left = (vw-dw)/2 + x must stay in [vw-dw, 0] so the frame stays filled
   const maxOffsetX = (dw - vw) / 2;
   const maxOffsetY = (dh - vh) / 2;
   photoCrop.x = Math.min(maxOffsetX, Math.max(-maxOffsetX, photoCrop.x));
@@ -1182,7 +1399,7 @@ function clampPhotoCrop(){
 function setPhotoCropScale(next){
   const prev = photoCrop.scale;
   photoCrop.scale = Math.min(photoCrop.maxScale, Math.max(photoCrop.minScale, next));
-  if(prev > 0){
+  if(prev){
     const ratio = photoCrop.scale / prev;
     photoCrop.x *= ratio;
     photoCrop.y *= ratio;
@@ -1199,22 +1416,21 @@ function wirePhotoCropEvents(){
   const zoom = document.getElementById('cropZoom');
   const cancelBtn = document.getElementById('cropCancelBtn');
   const applyBtn = document.getElementById('cropApplyBtn');
-  if(backdrop) backdrop.addEventListener('click', e=>{ if(e.target===backdrop) closePhotoCrop(); });
   if(cancelBtn) cancelBtn.addEventListener('click', closePhotoCrop);
-  if(applyBtn) applyBtn.addEventListener('click', applyPhotoCrop);
+  if(applyBtn) applyBtn.addEventListener('click', ()=>{ applyPhotoCrop(); });
   if(zoom) zoom.addEventListener('input', e=> setPhotoCropScale(Number(e.target.value)));
-
+  if(backdrop) backdrop.addEventListener('click', e=>{ if(e.target===backdrop) closePhotoCrop(); });
   if(!vp) return;
 
-  const onPointerDown = (e)=>{
+  vp.addEventListener('pointerdown', e=>{
     if(e.pointerType==='touch' && e.isPrimary===false) return;
     photoCrop.dragging = true;
     photoCrop.lastX = e.clientX;
     photoCrop.lastY = e.clientY;
     vp.classList.add('dragging');
-    try{ vp.setPointerCapture(e.pointerId); }catch(_){}
-  };
-  const onPointerMove = (e)=>{
+    try{ vp.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  vp.addEventListener('pointermove', e=>{
     if(!photoCrop.dragging) return;
     const dx = e.clientX - photoCrop.lastX;
     const dy = e.clientY - photoCrop.lastY;
@@ -1224,35 +1440,31 @@ function wirePhotoCropEvents(){
     photoCrop.y += dy;
     clampPhotoCrop();
     updatePhotoCropTransform();
-  };
-  const onPointerUp = (e)=>{
+  });
+  const endDrag = e=>{
     photoCrop.dragging = false;
     vp.classList.remove('dragging');
-    try{ vp.releasePointerCapture(e.pointerId); }catch(_){}
   };
-  vp.addEventListener('pointerdown', onPointerDown);
-  vp.addEventListener('pointermove', onPointerMove);
-  vp.addEventListener('pointerup', onPointerUp);
-  vp.addEventListener('pointercancel', onPointerUp);
+  vp.addEventListener('pointerup', endDrag);
+  vp.addEventListener('pointercancel', endDrag);
 
   vp.addEventListener('wheel', e=>{
     e.preventDefault();
-    const factor = e.deltaY > 0 ? 0.94 : 1.06;
+    const factor = e.deltaY > 0 ? 0.95 : 1.05;
     setPhotoCropScale(photoCrop.scale * factor);
   }, {passive:false});
 
-  // Pinch zoom
   vp.addEventListener('touchstart', e=>{
     if(e.touches.length===2){
       photoCrop.dragging = false;
-      const a = e.touches[0], b = e.touches[1];
+      const [a,b] = e.touches;
       photoCrop.pinchDist = Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
     }
   }, {passive:true});
   vp.addEventListener('touchmove', e=>{
     if(e.touches.length===2 && photoCrop.pinchDist){
       e.preventDefault();
-      const a = e.touches[0], b = e.touches[1];
+      const [a,b] = e.touches;
       const dist = Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
       setPhotoCropScale(photoCrop.scale * (dist / photoCrop.pinchDist));
       photoCrop.pinchDist = dist;
@@ -1280,7 +1492,6 @@ async function applyPhotoCrop(){
   const dh = photoCrop.naturalH * s;
   const left = (vw - dw) / 2 + photoCrop.x;
   const top = (vh - dh) / 2 + photoCrop.y;
-  // Viewport (0,0)-(vw,vh) in image pixels
   let sx = -left / s;
   let sy = -top / s;
   let sw = vw / s;
@@ -1437,80 +1648,182 @@ function renderRegister(){
         </div>`}
         <div class="field">
           <label>${isManager ? 'Photo' : 'Player Photo'} ${settings.photoRequired!==false ? '*' : '(optional)'}</label>
-          <div class="photo-drop" onclick="document.getElementById('regPhoto').click()">
+          <div class="photo-drop" id="regPhotoPickZone">
             ${regState.photoPreview ? `<img class="photo-preview" src="${regState.photoPreview}">` : ''}
-            <div style="font-size:13px; color:var(--chalk-dim);">${regState.photoFile ? 'Face crop ready — tap to change photo' : (settings.photoRequired!==false ? 'Tap to upload a photo (JPG/PNG, max 5MB) — required' : 'Tap to upload a photo (JPG/PNG, max 5MB) — optional')}</div>
+            <div style="font-size:13px; color:var(--chalk-dim);">${regState.photoFile ? 'Face crop ready — tap a button below to change photo' : (settings.photoRequired!==false ? 'Take a photo or choose one from the gallery — required' : 'Take a photo or choose one from the gallery — optional')}</div>
           </div>
-          <div class="photo-hint">After picking a photo you’ll crop it to a rounded portrait frame focused on the face.</div>
-          <input type="file" id="regPhoto" accept="image/*" style="display:none">
-        </div>
-        <div class="field">
-          <label>Payment Method *</label>
-          <div class="pay-toggle">
-            <div class="pay-opt ${regState.method==='online'?'active':''}" data-method="online">Pay Online</div>
-            <div class="pay-opt ${regState.method==='cash'?'active':''}" data-method="cash">Pay Cash</div>
+          <div class="photo-actions">
+            <button type="button" class="btn btn-outline" id="regPhotoTakeBtn">Take Photo</button>
+            <button type="button" class="btn btn-outline" id="regPhotoPickBtn">Choose Photo</button>
           </div>
         </div>
-        ${regState.method==='online' ? `
-          <div class="qr-box">
-            ${qrUrlForRole(regState.role) ? `<img src="${escapeHtml(qrUrlForRole(regState.role))}" alt="${isManager?'Manager':'Player'} payment QR" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="qr-missing" style="display:none;">${isManager?'Manager':'Player'} QR image failed to load. Ask the organizer to re-upload it in Admin → Settings.</div>` : `<div class="qr-missing">${isManager?'Manager':'Player'} payment QR is not set yet. Organizer: open Admin → Settings and upload a separate QR for ${isManager?'managers':'players'}, then Save Settings. Or choose Pay Cash.</div>`}
-            <div class="qr-hint">Scan the ${isManager?'manager':'player'} QR to pay ₹${feeNow}, then upload your payment receipt below.</div>
-          </div>
-          <div class="field">
-            <label>Payment Receipt *</label>
-            <div class="photo-drop" onclick="document.getElementById('regReceipt').click()">
-              ${regState.receiptPreview ? `<img class="photo-preview" style="border-radius:8px; width:auto; max-width:140px; height:auto; max-height:140px;" src="${regState.receiptPreview}">` : ''}
-              <div style="font-size:13px; color:var(--chalk-dim);">${regState.receiptFile ? regState.receiptFile.name : 'Tap to upload payment screenshot / receipt (JPG/PNG/PDF, max 5MB) — required'}</div>
-            </div>
-            <input type="file" id="regReceipt" accept="image/*,application/pdf" style="display:none">
-          </div>` : `
-          <div class="field"><div class="hint">Pay ₹${feeNow} in cash to the organizer at the venue. Your slot stays pending until payment is confirmed.</div></div>
-        `}
-        <button class="btn btn-primary" id="regSubmitBtn" style="width:100%; justify-content:center; margin-top:6px;" type="button" ${regState.submitting?'disabled':''}>
-          ${regState.submitting ? `<span class="spinner"></span> Submitting…` : 'Submit Registration'}
+        <button class="btn btn-primary" id="regPayBtn" style="width:100%; justify-content:center; margin-top:6px;" type="button">
+          Make Payment · ₹${feeNow}
         </button>
       </form>
     </div>
+    ${regState.payModalOpen ? renderPaymentModal(isManager, feeNow) : ''}
   `;
+}
+function renderPaymentModal(isManager, feeNow){
+  const uploadedQr = qrUrlForRole(regState.role);
+  const liveQr = upiGeneratedQrUrl();
+  const qr = uploadedQr || liveQr;
+  const upiId = upiIdForRole(regState.role);
+  const err = regState.payError;
+  const hint = regState.payHint;
+  const isUpi = regState.method === 'online';
+  const isCash = regState.method === 'cash';
+  const upiCopied = !!regState.upiCopied;
+  const qrHtml = qr
+    ? `<img src="${escapeHtml(qr)}" alt="Payment QR" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="qr-missing" style="display:none;">QR image failed to load. ${upiId ? 'Use Pay with UPI below.' : 'Ask the organizer to upload a QR or add a UPI ID.'}</div>`
+    : `<div class="qr-missing">Payment QR is not ready yet. ${upiId ? 'Use Pay with UPI below with UPI ID '+escapeHtml(upiId)+'.' : 'Organizer: add a UPI ID or upload a QR in Admin → Settings. You can still choose Pay Cash.'}</div>`;
+  return `
+    <div class="modal-backdrop pay-modal" id="payModal" onclick="if(event.target===this)closePaymentModal()">
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="pay-modal-head">
+          <div>
+            <h2>Make Payment</h2>
+            <div class="page-sub" style="margin:4px 0 0;">${isManager?'Manager':'Player'} registration</div>
+          </div>
+          <button class="pay-close" type="button" onclick="closePaymentModal()" aria-label="Close">×</button>
+        </div>
+        <div class="pay-amount">₹${feeNow} <span>to pay</span></div>
+        <div class="pay-method-row">
+          <button type="button" class="btn ${isUpi?'btn-primary':'btn-outline'}" id="payUsingUpiBtn" style="width:100%; justify-content:center;">Pay with UPI</button>
+          <button type="button" class="btn ${isCash?'btn-primary':'btn-outline'}" id="payCashBtn" style="width:100%; justify-content:center;" data-upi="cash">Pay with Cash</button>
+        </div>
+        ${isUpi ? `
+          <div class="qr-box" style="margin-top:12px;">
+            ${qrHtml}
+            <div class="qr-hint">Scan QR · pay ₹${feeNow}${upiId ? ' · '+escapeHtml(upiId) : ''}.</div>
+          </div>
+          ${upiId ? `
+            <div class="pay-id-card" style="margin-top:14px;">
+              <div class="pay-id-meta">
+                <div class="pay-id-label">Pay to UPI ID</div>
+                <div class="pay-id-value">${escapeHtml(upiId)}</div>
+              </div>
+              <button type="button" class="btn ${upiCopied?'copied':'btn-outline'}" id="copyUpiBtn">${upiCopied?'Copied':'Copy'}</button>
+            </div>
+          ` : `<div class="hint" style="margin-top:12px;">No UPI ID set. Scan QR or use Pay Cash.</div>`}
+          <div class="field" style="margin-top:14px;">
+            <label>Payment Receipt *</label>
+            <div class="photo-drop" id="regReceiptPickZone">
+              ${regState.receiptPreview ? `<img class="photo-preview" style="border-radius:8px; width:auto; max-width:140px; height:auto; max-height:140px;" src="${regState.receiptPreview}">` : ''}
+              <div style="font-size:13px; color:var(--chalk-dim);">${regState.receiptFile ? escapeHtml(regState.receiptFile.name) : 'After paying, upload the payment screenshot (JPG/PNG/PDF)'}</div>
+            </div>
+          </div>
+        ` : ''}
+        ${hint ? `<div class="hint" style="margin-top:10px;">${escapeHtml(hint)}</div>` : ''}
+        ${isCash ? `<div class="hint" style="margin-top:10px;">Pay ₹${feeNow} cash at venue.</div>` : ''}
+        ${err ? `<div class="form-msg err" style="margin-top:12px;">${escapeHtml(err)}</div>` : ''}
+        <button class="btn btn-primary" id="regSubmitBtn" style="width:100%; justify-content:center; margin-top:14px;" type="button" ${regState.submitting?'disabled':''}>
+          ${regState.submitting ? `<span class="spinner"></span> Submitting…` : 'Submit Registration'}
+        </button>
+      </div>
+    </div>`;
 }
 function startNewRegistration(){ resetRegForm(); render(); }
 
-async function submitRegistration(){
+function closePaymentModal(){
+  regState.payModalOpen = false;
+  regState.payError = null;
+  regState.payHint = null;
+  render();
+}
+function registrationDetailError(){
   syncRegFieldsFromDom();
   const role = regState.role === 'manager' ? 'manager' : 'player';
   const name = (regState.name||'').trim();
   const phoneRaw = (regState.phone||'').trim();
-  const phone = normalizeIndianPhone(phoneRaw);
+  const teamName = (regState.teamName||'').trim();
+  const position = role === 'manager' ? 'MGR' : (regState.position||'').trim();
+  if(!name) return 'Please enter your full name.';
+  if(!phoneRaw) return 'Please enter your phone number.';
+  if(!isValidIndianPhone(phoneRaw)) return 'Enter a valid Indian mobile number (10 digits, starting with 6–9).';
+  if(role === 'manager'){
+    if(!teamName) return 'Please enter your team name.';
+    if(!availableManagerSlots()) return `Manager spots are full — only ${maxTeamSlots()} managers can register (one per team).`;
+  }else if(!position || !PLAYER_POSITIONS.some(p=>p.value===position)){
+    return 'Please select your playing position.';
+  }else if(position === 'GK' && !availableGoalkeeperSlots()){
+    return `Goalkeeper spots are full — only ${maxTeamSlots()} goalkeepers can register (one per team).`;
+  }
+  if(settings.photoRequired!==false && !regState.photoFile) return 'Please upload a photo.';
+  if(!availableSlots()) return 'Sorry, all slots just filled up.';
+  if(!db) return 'Not connected to the database yet.';
+  return '';
+}
+function openPaymentModal(){
+  const err = registrationDetailError();
+  if(err){ regState.msg={type:'error', text:err}; render(); return; }
+  regState.msg = null;
+  regState.payError = null;
+  regState.payHint = null;
+  regState.method = '';
+  regState.upiApp = '';
+  regState.upiCopied = false;
+  regState.payModalOpen = true;
+  render();
+}
+function choosePayWithUpi(){
+  const pa = upiIdForRole(regState.role);
+  const amt = upiAmountParam() || String(registrationFeeForRole(regState.role));
+  regState.method = 'online';
+  regState.upiApp = 'upi';
+  regState.payError = null;
+  if(!pa){
+    regState.payHint = 'No UPI ID set. Scan QR or use Pay Cash.';
+  }else if(regState.upiCopied){
+    regState.payHint = 'Open any UPI app, pay ₹'+amt+', then upload the screenshot below and submit.';
+  }else{
+    regState.payHint = 'Copy UPI ID first.';
+  }
+  render();
+}
+function selectPaymentOption(id){
+  if(id === 'cash'){
+    regState.method = 'cash';
+    regState.upiApp = '';
+    regState.upiCopied = false;
+    regState.payHint = null;
+    regState.payError = null;
+    render();
+    return;
+  }
+  choosePayWithUpi();
+}
+
+async function submitRegistration(){
+  const detailErr = registrationDetailError();
+  if(detailErr){
+    if(regState.payModalOpen){ regState.payError = detailErr; }
+    else { regState.msg = {type:'error', text:detailErr}; }
+    render(); return;
+  }
+  const role = regState.role === 'manager' ? 'manager' : 'player';
+  const name = (regState.name||'').trim();
+  const phone = normalizeIndianPhone(regState.phone||'');
   const teamName = (regState.teamName||'').trim();
   const position = role === 'manager' ? 'MGR' : (regState.position||'').trim();
   const feePaid = registrationFeeForRole(role);
 
-  if(!name){ regState.msg={type:'error', text:'Please enter your full name.'}; render(); return; }
-  if(!phoneRaw){ regState.msg={type:'error', text:'Please enter your phone number.'}; render(); return; }
-  if(!isValidIndianPhone(phoneRaw)){ regState.msg={type:'error', text:'Enter a valid Indian mobile number (10 digits, starting with 6–9).'}; render(); return; }
-  if(role === 'manager'){
-    if(!teamName){ regState.msg={type:'error', text:'Please enter your team name.'}; render(); return; }
-    if(!availableManagerSlots()){
-      regState.msg={type:'error', text:`Manager spots are full — only ${maxTeamSlots()} managers can register (one per team).`};
-      render(); return;
-    }
-  }else if(!position || !PLAYER_POSITIONS.some(p=>p.value===position)){
-    regState.msg={type:'error', text:'Please select your playing position.'}; render(); return;
-  }else if(position === 'GK' && !availableGoalkeeperSlots()){
-    regState.msg={type:'error', text:`Goalkeeper spots are full — only ${maxTeamSlots()} goalkeepers can register (one per team).`};
+  if(!regState.method || (regState.method!=='online' && regState.method!=='cash')){
+    regState.payError = 'Choose UPI or Cash.';
+    if(!regState.payModalOpen){ regState.msg={type:'error', text:regState.payError}; }
     render(); return;
   }
-  if(settings.photoRequired!==false && !regState.photoFile){ regState.msg={type:'error', text:'Please upload a photo.'}; render(); return; }
-  if(!regState.method || (regState.method!=='online' && regState.method!=='cash')){
-    regState.msg={type:'error', text:'Please select a payment method.'}; render(); return;
+  if(regState.method==='online' && !regState.upiCopied){
+    regState.payError = 'Copy UPI ID first.';
+    render(); return;
   }
   if(regState.method==='online' && !regState.receiptFile){
-    regState.msg={type:'error', text:'Please upload your payment receipt for online payment.'}; render(); return;
+    regState.payError = 'Upload payment screenshot.';
+    render(); return;
   }
-  if(!availableSlots()){ regState.msg={type:'error', text:'Sorry, all slots just filled up.'}; render(); return; }
-  if(!db){ regState.msg={type:'error', text:'Not connected to the database yet.'}; render(); return; }
 
-  regState.submitting = true; regState.msg = null; render();
+  regState.submitting = true; regState.msg = null; regState.payError = null; render();
   try{
     const docRef = db.collection(PLAYERS_COLLECTION).doc();
     const photoUrl = regState.photoFile ? await uploadToCloudinary(regState.photoFile) : '';
@@ -1523,18 +1836,19 @@ async function submitRegistration(){
       feeAmount: feePaid,
       photoUrl, receiptUrl,
       paymentMethod: regState.method,
+      upiApp: regState.method==='online' ? (regState.upiApp||'') : 'cash',
       transactionId: '',
       status: 'pending',
       serial: null,
       createdAt: Date.now()
     });
-    regState = { role:'player', name:'', phone:'', teamName:'', position:'', photoFile:null, photoPreview:'', receiptFile:null, receiptPreview:'', method:'online', submitting:false,
-      msg:{type:'success', text:"Thanks, "+name+"! Your registration is in. Payment will be manually verified within 2 days, and you'll appear on the confirmed list once approved."} };
+    resetRegForm();
+    regState.msg = {type:'success', text:"Thanks, "+name+"! Your registration is in. Payment will be manually verified within 2 days, and you'll appear on the confirmed list once approved."};
     render();
   }catch(e){
     console.error(e);
     regState.submitting = false;
-    regState.msg = {type:'error', text:'Something went wrong submitting your registration. Please try again.'};
+    regState.payError = 'Something went wrong submitting your registration. Please try again.';
     render();
   }
 }
@@ -1695,7 +2009,7 @@ function renderAdminPlayers(){
       <td>${escapeHtml(p.name)}${p.role==='manager' ? ` <span class="pill pending" style="margin-left:6px;">Manager</span>` : ''}${p.teamName ? `<div class="page-sub" style="margin:4px 0 0;">${escapeHtml(p.teamName)}</div>` : ''}</td>
       <td>${escapeHtml(p.role==='manager' ? 'Manager' : (p.position ? positionLabel(p.position) : '—'))}</td>
       <td>${escapeHtml(p.phone||'')}</td>
-      <td>${p.paymentMethod==='online'?'Online':'Cash'}${typeof p.feeAmount==='number' ? `<div class="page-sub" style="margin:4px 0 0;">₹${p.feeAmount}</div>` : ''}</td>
+      <td>${p.paymentMethod==='online'?'Online'+(p.upiApp?' · '+escapeHtml(p.upiApp):''):'Cash'}${typeof p.feeAmount==='number' ? `<div class="page-sub" style="margin:4px 0 0;">₹${p.feeAmount}</div>` : ''}</td>
       <td>${p.receiptUrl ? `<a href="${p.receiptUrl}" target="_blank" rel="noopener" style="color:var(--amber);">View</a>` : (p.transactionId ? escapeHtml(p.transactionId) : '—')}</td>
       <td><span class="pill ${p.status}">${p.status}</span></td>
       <td>${displaySerialLabel(p)}</td>
@@ -1711,7 +2025,7 @@ function renderAdminPlayers(){
 
   return `
     <div class="toolbar">
-      <input type="text" placeholder="Search by name, phone, team or position…" value="${adminState.search}" oninput="onAdminSearch(this.value)">
+      <input type="text" placeholder="Search by name, phone, team or position…" value="${escapeHtml(adminState.search)}" oninput="onAdminSearch(this.value, this.selectionStart)">
       <select onchange="onAdminFilter(this.value)">
         <option value="all" ${adminState.statusFilter==='all'?'selected':''}>All Statuses</option>
         <option value="pending" ${adminState.statusFilter==='pending'?'selected':''}>Pending</option>
@@ -1726,7 +2040,16 @@ function renderAdminPlayers(){
       </table>
     </div>`;
 }
-function onAdminSearch(v){ adminState.search=v; render(); document.querySelector('.toolbar input')?.focus(); }
+function onAdminSearch(v, caret){
+  adminState.search = v;
+  render();
+  const input = document.querySelector('.toolbar input');
+  if(input){
+    input.focus();
+    const pos = (typeof caret === 'number') ? caret : v.length;
+    input.setSelectionRange(pos, pos);
+  }
+}
 function onAdminFilter(v){ adminState.statusFilter=v; render(); }
 
 function maxConfirmedSerial(excludeId){
@@ -1925,8 +2248,8 @@ function renderAdminSettings(){
       <div class="settings-grid">
         <div class="field"><label>Tournament Name</label><input type="text" id="setName" value="${String(s.name||'').replace(/"/g,'&quot;')}"><div class="hint">Main title on the home page hero.</div></div>
         <div class="field"><label>Season / Edition</label><input type="text" id="setSeason" value="${String(s.seasonLabel||'').replace(/"/g,'&quot;')}" placeholder="e.g. 2026 or Season 7"><div class="hint">Shown under the name (year, season number, etc.). Leave blank to hide.</div></div>
-        <div class="field"><label>Registration Fee (₹)</label><input type="number" id="setFee" value="${s.fee}" min="0"><div class="hint">Player entry fee shown on register form.</div></div>
-        <div class="field"><label>Manager Fee (₹)</label><input type="number" id="setManagerFee" value="${managerFeeAmount()}" min="0"><div class="hint">Separate fee when someone registers as Manager.</div></div>
+        <div class="field"><label>Registration Fee (₹)</label><input type="number" id="setFee" value="${s.fee}" min="0" max="100000" step="1"><div class="hint">Player entry fee. UPI apps reject more than ₹1,00,000 in one payment.</div></div>
+        <div class="field"><label>Manager Fee (₹)</label><input type="number" id="setManagerFee" value="${managerFeeAmount()}" min="0" max="100000" step="1"><div class="hint">Separate fee when someone registers as Manager.</div></div>
         <div class="field"><label>Tournament Date</label><input type="date" id="setDate" value="${s.tournamentDate||''}"><div class="hint">Shown on the home page.</div></div>
         <div class="field"><label>Tournament Time</label><input type="time" id="setTime" value="${s.tournamentTime||''}"><div class="hint">Start time shown on home.</div></div>
         <div class="field"><label>Venue</label><input type="text" id="setVenue" value="${String(s.venue||'').replace(/"/g,'&quot;')}" placeholder="e.g. City Stadium Ground"><div class="hint">Location name shown on home.</div></div>
@@ -1955,6 +2278,11 @@ function renderAdminSettings(){
           ${renderQrAdminCard('manager', 'Manager QR', `Shown when registering as Manager — fee ₹${managerFeeAmount()}`)}
         </div>
         <div class="hint">Each role uses its own QR because the amounts are different. After changing, click Save Settings.</div>
+        <div class="settings-grid" style="margin-top:14px;">
+          <div class="field"><label>Player UPI ID</label><input type="text" id="setUpi-player" value="${String(s.playerUpiId||'').replace(/"/g,'&quot;')}" placeholder="club@okaxis"><div class="hint">Personal or business UPI ID. The payment popup builds a live QR from this (best for players).</div></div>
+          <div class="field"><label>Manager UPI ID</label><input type="text" id="setUpi-manager" value="${String(s.managerUpiId||'').replace(/"/g,'&quot;')}" placeholder="club@okaxis"><div class="hint">Used for manager-fee payments.</div></div>
+          <div class="field" style="grid-column:1 / -1;"><label>UPI Merchant Code (MCC) — optional</label><input type="text" id="setUpiMerchantCode" value="${String(s.upiMerchantCode||'').replace(/"/g,'&quot;')}" placeholder="e.g. 5411 (leave blank for personal UPI)"><div class="hint">Leave blank for a normal/personal UPI ID — players must <strong>scan the QR</strong> (GPay blocks browser pay links and shows a fake “limit exceeded”). Only fill this if you have a <strong>Business / Merchant</strong> UPI account; then one-tap app open can work.</div></div>
+        </div>
       </div>
       <button class="btn btn-primary" onclick="saveAdminSettings()" style="margin-top:6px;">Save Settings</button>
     </div>`;
@@ -1999,12 +2327,15 @@ async function saveAdminSettings(){
   const teamsEl = document.getElementById('setTeams');
   const closeDateEl = document.getElementById('setCloseDate');
   const closeTimeEl = document.getElementById('setCloseTime');
+  const playerUpiEl = document.getElementById('setUpi-player');
+  const managerUpiEl = document.getElementById('setUpi-manager');
+  const merchantCodeEl = document.getElementById('setUpiMerchantCode');
   if(!nameEl || !seasonEl || !feeEl || !managerFeeEl || !maxEl || !dateEl || !timeEl || !venueEl || !venueUrlEl || !teamsEl || !closeDateEl || !closeTimeEl) return;
 
   const name = nameEl.value.trim() || settings.name;
   const seasonLabel = seasonEl.value.trim();
-  const fee = Number(feeEl.value);
-  const managerFee = Number(managerFeeEl.value);
+  const fee = parseRupeeAmount(feeEl.value);
+  const managerFee = parseRupeeAmount(managerFeeEl.value);
   const maxSlots = Number(maxEl.value);
   const maxTeams = Number(teamsEl.value);
   const tournamentDate = dateEl.value || '';
@@ -2014,12 +2345,23 @@ async function saveAdminSettings(){
   if(venueUrl && !/^https?:\/\//i.test(venueUrl)) venueUrl = 'https://' + venueUrl;
   const registrationCloseDate = closeDateEl.value || '';
   const registrationCloseTime = closeTimeEl.value || (registrationCloseDate ? '23:59' : '');
+  const playerUpiId = (playerUpiEl ? playerUpiEl.value : '').trim();
+  const managerUpiId = (managerUpiEl ? managerUpiEl.value : '').trim();
+  const upiMerchantCode = (merchantCodeEl ? merchantCodeEl.value : '').trim();
   if(!Number.isFinite(fee) || fee < 0){
     adminState.settingsMsg = {type:'err', text:'Please enter a valid registration fee.'};
     render(); return;
   }
+  if(fee > 100000){
+    adminState.settingsMsg = {type:'err', text:'Player fee cannot be more than ₹1,00,000 (UPI limit).'};
+    render(); return;
+  }
   if(!Number.isFinite(managerFee) || managerFee < 0){
     adminState.settingsMsg = {type:'err', text:'Please enter a valid manager fee.'};
+    render(); return;
+  }
+  if(managerFee > 100000){
+    adminState.settingsMsg = {type:'err', text:'Manager fee cannot be more than ₹1,00,000 (UPI limit).'};
     render(); return;
   }
   if(!Number.isFinite(maxSlots) || maxSlots < 1){
@@ -2034,7 +2376,7 @@ async function saveAdminSettings(){
   try{
     const qrUrl = await resolveQrUrlFromAdmin('player');
     const managerQrUrl = await resolveQrUrlFromAdmin('manager');
-    await saveSettings({name, seasonLabel, fee, managerFee, maxSlots, maxTeams, tournamentDate, tournamentTime, venue, venueUrl, qrUrl, managerQrUrl, registrationCloseDate, registrationCloseTime});
+    await saveSettings({name, seasonLabel, fee, managerFee, maxSlots, maxTeams, tournamentDate, tournamentTime, venue, venueUrl, qrUrl, managerQrUrl, playerUpiId, managerUpiId, upiMerchantCode, registrationCloseDate, registrationCloseTime});
     adminState.qrByKind = { player:emptyQrDraft(), manager:emptyQrDraft() };
     const parts = [];
     if(qrUrl) parts.push('player QR live');
@@ -2308,6 +2650,7 @@ async function exportPDF(){
    MASTER RENDER
    ============================================================ */
 function render(){
+  if(regState.pickingFile) return;
   try{
     stopDeadlineTimer();
     buildNav();
@@ -2326,6 +2669,7 @@ function render(){
 
     wireEvents();
     if(page==='home') startDeadlineTimer();
+    document.body.style.overflow = (page==='register' && regState.payModalOpen) ? 'hidden' : '';
   }catch(e){
     console.error('Render failed:', e);
     const app = document.getElementById('app');
@@ -2371,35 +2715,14 @@ function wireEvents(){
     regState.position = next;
   });
 
-  const photoInput = document.getElementById('regPhoto');
-  if(photoInput) photoInput.addEventListener('change', e=>{
-    const f = e.target.files[0];
-    if(!f) return;
-    if(f.size > 5*1024*1024){ alert('Photo must be under 5MB.'); e.target.value=''; return; }
-    if(!f.type.startsWith('image/')){ alert('Please choose a JPG or PNG photo.'); e.target.value=''; return; }
-    syncRegFieldsFromDom();
-    const reader = new FileReader();
-    reader.onload = ev=> openPhotoCrop(ev.target.result);
-    reader.readAsDataURL(f);
-    e.target.value = '';
-  });
-
-  const receiptInput = document.getElementById('regReceipt');
-  if(receiptInput) receiptInput.addEventListener('change', e=>{
-    const f = e.target.files[0];
-    if(!f) return;
-    if(f.size > 5*1024*1024){ alert('Receipt must be under 5MB.'); return; }
-    syncRegFieldsFromDom();
-    regState.receiptFile = f;
-    if(f.type.startsWith('image/')){
-      const reader = new FileReader();
-      reader.onload = ev=>{ regState.receiptPreview = ev.target.result; render(); };
-      reader.readAsDataURL(f);
-    }else{
-      regState.receiptPreview = '';
-      render();
-    }
-  });
+  const takeBtn = document.getElementById('regPhotoTakeBtn');
+  if(takeBtn) takeBtn.addEventListener('click', ()=> openPersistentFile('regPhotoCamera'));
+  const pickBtn = document.getElementById('regPhotoPickBtn');
+  if(pickBtn) pickBtn.addEventListener('click', ()=> openPersistentFile('regPhotoGallery'));
+  const pickZone = document.getElementById('regPhotoPickZone');
+  if(pickZone) pickZone.addEventListener('click', ()=> openPersistentFile('regPhotoGallery'));
+  const receiptZone = document.getElementById('regReceiptPickZone');
+  if(receiptZone) receiptZone.addEventListener('click', ()=> openPersistentFile('regReceiptPersist'));
 
   document.querySelectorAll('.role-opt').forEach(el=>{
     el.addEventListener('click', ()=>{
@@ -2418,13 +2741,15 @@ function wireEvents(){
   const teamInput = document.getElementById('regTeamName');
   if(teamInput) teamInput.addEventListener('input', e=>{ regState.teamName = e.target.value; });
 
-  document.querySelectorAll('.pay-opt').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      syncRegFieldsFromDom();
-      regState.method = el.dataset.method;
-      render();
-    });
+  const payBtn = document.getElementById('regPayBtn');
+  if(payBtn) payBtn.addEventListener('click', openPaymentModal);
+  document.querySelectorAll('[data-upi]').forEach(el=>{
+    el.addEventListener('click', ()=> selectPaymentOption(el.dataset.upi));
   });
+  const payUsingUpiBtn = document.getElementById('payUsingUpiBtn');
+  if(payUsingUpiBtn) payUsingUpiBtn.addEventListener('click', choosePayWithUpi);
+  const copyUpiBtn = document.getElementById('copyUpiBtn');
+  if(copyUpiBtn) copyUpiBtn.addEventListener('click', copyUpiPaymentDetails);
   const regBtn = document.getElementById('regSubmitBtn');
   if(regBtn) regBtn.addEventListener('click', submitRegistration);
 
@@ -2463,9 +2788,48 @@ function wireEvents(){
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
   if(photoCrop.open){ closePhotoCrop(); return; }
+  if(regState.payModalOpen){ closePaymentModal(); return; }
   if(adminState.editPlayer) closeEditPlayer();
 });
 
+function wirePersistentFileInputs(){
+  const onPhoto = e=>{
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    endFilePick();
+    if(f) handlePlayerPhotoFile(f);
+  };
+  const camera = document.getElementById('regPhotoCamera');
+  const gallery = document.getElementById('regPhotoGallery');
+  const receipt = document.getElementById('regReceiptPersist');
+  if(camera) camera.addEventListener('change', onPhoto);
+  if(gallery) gallery.addEventListener('change', onPhoto);
+  if(receipt) receipt.addEventListener('change', e=>{
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    endFilePick();
+    if(!f) return;
+    syncRegFieldsFromDom();
+    regState.receiptFile = f;
+    if(String(f.type||'').startsWith('image/')){
+      const reader = new FileReader();
+      reader.onload = ev=>{ regState.receiptPreview = ev.target.result; render(); };
+      reader.readAsDataURL(f);
+    }else{
+      regState.receiptPreview = '';
+      render();
+    }
+  });
+}
+
+function releaseFilePickSoon(){
+  if(!regState.pickingFile) return;
+  setTimeout(()=>{ if(regState.pickingFile) endFilePick(); }, 1500);
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) releaseFilePickSoon(); });
+window.addEventListener('focus', releaseFilePickSoon);
+
+wirePersistentFileInputs();
 initFirebase();
 render();
 </script>
