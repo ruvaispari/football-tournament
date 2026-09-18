@@ -859,12 +859,13 @@ function auctionFingerprint(a){
   if(!a) return '';
   const usedIds = [];
   const teams = (a.teams||[]).map(t=>{
+    if(t.managerPlayerId) usedIds.push(t.managerPlayerId);
     if(t.iconPlayerId) usedIds.push(t.iconPlayerId);
     const squad = (t.squad||[]).map(s=>{
       if(s.playerId) usedIds.push(s.playerId);
       return (s.playerId||'')+':'+(s.name||'');
     }).join('|');
-    return [t.id, t.name, t.iconPlayerId, t.logoUrl, squad].join('~');
+    return [t.id, t.name, t.manager||'', t.managerPlayerId||'', t.iconPlayerId, t.logoUrl, squad].join('~');
   }).join(',');
   const playerBit = usedIds.map(id=>{
     const p = auctionPlayerById(id);
@@ -874,6 +875,17 @@ function auctionFingerprint(a){
 }
 function rosterFromAuctionTeam(t){
   const list = [];
+  const mgr = t.managerPlayerId ? auctionPlayerById(t.managerPlayerId) : null;
+  const mgrName = (mgr && mgr.name) || String(t.manager||'').trim();
+  if(mgrName){
+    list.push({
+      name: mgrName,
+      position: 'MGR',
+      photoUrl: (mgr && mgr.photoUrl) || '',
+      role: 'manager',
+      playerId: t.managerPlayerId || ''
+    });
+  }
   if(t.iconPlayerId){
     const p = auctionPlayerById(t.iconPlayerId);
     list.push({
@@ -1790,7 +1802,9 @@ function teamInitial(name){
   return t ? t.charAt(0).toUpperCase() : '?';
 }
 function matchNumber(id){
-  return getAllMatchesFlat().findIndex(m=>m.id===id) + 1;
+  // Number matches in the same interleaved A/B order they're displayed in
+  // (Fixtures page + home Next Match), not the group-by-group flat order.
+  return getFixturesOrdered().findIndex(m=>m.id===id) + 1;
 }
 function matchStatus(id){
   if(isPlayed(id)) return {cls:'ft', label:'FT'};
@@ -1846,7 +1860,7 @@ function renderMatchModal(id){
   const addForm = (editMode && ctx.ready) ? `
     <div class="add-goal-row" onclick="event.stopPropagation()">
       <input id="goalPlayerName" type="text" list="goalPlayerList" placeholder="Player name" autocomplete="off">
-      <datalist id="goalPlayerList">${getRoster(ctx.a).concat(getRoster(ctx.b)).map(p=>`<option value="${String(rosterPlayerName(p)).replace(/"/g,'&quot;')}">`).join('')}</datalist>
+      <datalist id="goalPlayerList">${getRoster(ctx.a).concat(getRoster(ctx.b)).filter(p=>rosterPlayerRole(p)!=='manager').map(p=>`<option value="${String(rosterPlayerName(p)).replace(/"/g,'&quot;')}">`).join('')}</datalist>
       <select id="goalPlayerTeam">
         <option value="${ctx.a}">${ctx.aName}</option>
         <option value="${ctx.b}">${ctx.bName}</option>
@@ -2031,12 +2045,18 @@ function renderTeams(){
       const r = byIndex[i];
       const roster = getRoster(i);
       const logo = teamLogoUrl(i);
+      const players = roster.filter(p=>rosterPlayerRole(p)!=='manager');
+      const mgr = roster.find(p=>rosterPlayerRole(p)==='manager');
+      const hint = [
+        mgr ? 'Mgr '+rosterPlayerName(mgr) : null,
+        players.length+' player'+(players.length===1?'':'s')+' · tap to view'
+      ].filter(Boolean).join(' · ');
       html += `<div class="team-card" onclick="openTeamModal(${i})">
         <div class="team-tag">Group ${group}</div>
         ${logo ? `<img class="team-card-logo" src="${logo}" alt="">` : ''}
         <input class="team-name-input" data-team="${i}" value="${state.teams[i]}" ${editMode?'':'disabled'} onclick="event.stopPropagation()">
         <div class="team-record">${(r?r.P:0)} played · ${r?r.W:0}W ${r?r.D:0}D ${r?r.L:0}L · ${r?r.Pts:0} pts</div>
-        <div class="team-players-hint">${roster.length} player${roster.length===1?'':'s'} · tap to view</div>
+        <div class="team-players-hint">${hint}</div>
       </div>`;
     }
     html += `</div></div>`;
@@ -2081,19 +2101,19 @@ function renderTeamModal(idx){
     ? roster.map((p,i)=>{
         const pname = rosterPlayerName(p);
         const pos = rosterPlayerPosition(p);
-        const photo = rosterPlayerPhoto(p);
         const role = rosterPlayerRole(p);
+        const roleLabel = role==='manager' ? 'Manager'
+          : role==='icon' ? ('Icon'+(pos ? ' · '+positionLabel(pos) : ''))
+          : (pos ? positionLabel(pos) : '');
         return `
         <div class="roster-row">
           <div class="roster-row-main">
-            ${photo ? `<img class="roster-thumb" src="${photo}" alt="">` : `<div class="roster-thumb ph">${teamInitial(pname)}</div>`}
             <div class="roster-name">
               <strong>${pname}</strong>
-              ${pos ? `<div class="roster-pos">${positionLabel(pos)}</div>` : ''}
+              ${roleLabel ? `<div class="roster-pos">${roleLabel}</div>` : ''}
             </div>
-            ${role==='icon' ? '<span class="roster-tag">Icon</span>' : ''}
           </div>
-          ${editMode ? `<button class="roster-del" type="button" data-team="${idx}" data-player="${i}" aria-label="Remove">✕</button>` : ''}
+          ${editMode && role!=='manager' ? `<button class="roster-del" type="button" data-team="${idx}" data-player="${i}" aria-label="Remove">✕</button>` : ''}
         </div>`;
       }).join('')
     : `<div class="roster-empty">${editMode ? 'No players yet. Add names below.' : 'Squad will appear here after the auction.'}</div>`;
@@ -2104,6 +2124,12 @@ function renderTeamModal(idx){
       <button type="button" id="addRosterPlayerBtn">Add</button>
     </div>` : '';
 
+  const playerCount = roster.filter(p=>rosterPlayerRole(p)!=='manager').length;
+  const mgr = roster.find(p=>rosterPlayerRole(p)==='manager');
+  const metaBits = [`Group ${group}`];
+  if(mgr) metaBits.push('Mgr '+rosterPlayerName(mgr));
+  metaBits.push(playerCount+' player'+(playerCount===1?'':'s'));
+
   return `
     <div class="modal-backdrop roster-modal" id="teamModal" onclick="if(event.target===this)closeTeamModal()">
       <div class="modal-card" role="dialog" aria-modal="true">
@@ -2111,7 +2137,7 @@ function renderTeamModal(idx){
           ${logo ? `<img class="roster-avatar" src="${logo}" alt="" style="object-fit:cover;">` : `<div class="roster-avatar">${teamInitial(name)}</div>`}
           <div class="roster-title">
             <h2 title="${name}">${name}</h2>
-            <div class="roster-meta">Group ${group} · ${roster.length} player${roster.length===1?'':'s'}</div>
+            <div class="roster-meta">${metaBits.join(' · ')}</div>
           </div>
           <button class="roster-close" type="button" onclick="closeTeamModal()" aria-label="Close">×</button>
         </div>
@@ -2492,7 +2518,7 @@ function wireEvents(){
   if(goalTeamEl && goalListEl){
     const fillList = ()=>{
       const idx = Number(goalTeamEl.value);
-      goalListEl.innerHTML = getRoster(idx).map(p=>`<option value="${String(rosterPlayerName(p)).replace(/"/g,'&quot;')}">`).join('');
+      goalListEl.innerHTML = getRoster(idx).filter(p=>rosterPlayerRole(p)!=='manager').map(p=>`<option value="${String(rosterPlayerName(p)).replace(/"/g,'&quot;')}">`).join('');
     };
     goalTeamEl.addEventListener('change', fillList);
     fillList();
