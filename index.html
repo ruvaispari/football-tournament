@@ -1785,7 +1785,7 @@ function renderHome(){
 }
 
 function renderStandings(){
-  let html = `<div class="page-title">Standings</div><div class="page-sub">Top 2 qualify · tie-break: Pts → GD → GF → GA → fair play (fewer cards).</div>`;
+  let html = `<div class="page-title">Standings</div><div class="page-sub">Top 2 in a group will qualify for knockouts</div>`;
   activeGroups().forEach(group=>{
     const rows = computeStandings(group);
     html += `<div class="card"><h2>Group ${group} · ${rows.length} teams</h2><table><thead><tr><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>YC</th><th>RC</th><th>Pts</th></tr></thead><tbody>`;
@@ -2033,7 +2033,7 @@ function renderTeams(){
     ? `<div class="sync-note">${auctionSyncLabel()}${state.auctionImportedAt ? ' · squads loaded from auction' : ''}</div>`
     : '';
   const lay = groupLayout();
-  let html = `<div class="page-title">Teams</div><div class="page-sub">${lay.n} teams from registration${lay.groups.length===2 ? ` · Group A ${lay.size.A} · Group B ${lay.size.B}` : ''}. Tap a team to view the player list fetched after auction.</div>${auctionNote}`;
+  let html = `<div class="page-title">Teams</div><div class="page-sub">Tap a team to view the player list.</div>${auctionNote}`;
   activeGroups().forEach(group=>{
     const off = lay.offset[group];
     const size = lay.size[group];
@@ -2239,7 +2239,7 @@ function renderStats(){
 
   return `
     <div class="page-title">Top Scorers</div>
-    <div class="page-sub">Auto from match scorers · penalty shootout goals are excluded.</div>
+    <div class="page-sub">Goals scored across the tournament.</div>
     <div class="card">
       <div class="scorer-row head"><div>#</div><div>Player</div><div>Team</div><div>Goals</div><div></div></div>
       ${rows}

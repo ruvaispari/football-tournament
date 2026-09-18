@@ -365,7 +365,7 @@ let db = null;
 let page = 'home';
 let unlocked = false;
 let registeredPlayers = []; // from registration (confirmed preferred)
-let tournamentSettings = { name:'Tournament', seasonLabel:'2026', logoUrl:'', maxTeams:8, tournamentDate:'', tournamentTime:'', venue:'', venueUrl:'', auctionDeskVisible:true };
+let tournamentSettings = { name:'Tournament', seasonLabel:'2026', logoUrl:'', maxSlots:32, maxTeams:8, tournamentDate:'', tournamentTime:'', venue:'', venueUrl:'', auctionDeskVisible:true };
 let auction = defaultAuction();
 let ui = {
   msg:null, loginErr:'', setupBusy:false, selectedTeamId:null, customInc:'',
@@ -377,7 +377,7 @@ function defaultAuction(){
     competitionName:'',
     tournamentLogoUrl:'',
     auctioneerName:'',
-    basePrice:20,
+    basePrice:50,
     defaultBudget:1000,
     maxSquadSize:7,
     status:'setup', // setup | running | completed
@@ -481,6 +481,12 @@ function listenTournament(){
       auction.competitionName = tournamentSettings.name || '';
       auction.tournamentLogoUrl = tournamentSettings.logoUrl || '';
     }
+    // Keep squad size & team count in sync with registration
+    const derived = derivedMaxSquadSize();
+    if(derived && auction.maxSquadSize !== derived){
+      auction.maxSquadSize = derived;
+    }
+    if(auction.status==='setup') syncTeamsFromRegistration();
     render();
   }, err=>{ console.error(err); setFbStatus('Settings listen failed','err'); });
 }
@@ -515,6 +521,17 @@ async function persistAuction(extra){
 let publishTimer = null;
 function rosterFromAuctionTeam(t){
   const list = [];
+  const mgr = t.managerPlayerId ? playerById(t.managerPlayerId) : null;
+  const mgrName = (mgr && mgr.name) || String(t.manager||'').trim();
+  if(mgrName){
+    list.push({
+      name: mgrName,
+      position: 'MGR',
+      photoUrl: (mgr && mgr.photoUrl) || '',
+      role: 'manager',
+      playerId: t.managerPlayerId || ''
+    });
+  }
   if(t.iconPlayerId){
     const p = playerById(t.iconPlayerId);
     list.push({
@@ -617,10 +634,28 @@ function currentPlayer(){
   return auction.currentPlayerId ? playerById(auction.currentPlayerId) : null;
 }
 function remainingSlots(team){
-  const size = Number(auction.maxSquadSize)||7;
+  const size = maxSquadSize();
   const bought = (team.squad||[]).length;
   const icon = team.iconPlayerId ? 1 : 0;
   return Math.max(0, size - bought - icon);
+}
+function registrationPlayerCount(){
+  return Math.max(0, Number(tournamentSettings.maxSlots)||0);
+}
+function registrationTeamCount(){
+  return Math.max(0, Number(tournamentSettings.maxTeams)||0);
+}
+/** Max players per team from registration: players ÷ teams (whole number). */
+function derivedMaxSquadSize(){
+  const players = registrationPlayerCount();
+  const teams = registrationTeamCount();
+  if(players < 1 || teams < 1) return 0;
+  return Math.max(1, Math.floor(players / teams));
+}
+function maxSquadSize(){
+  const derived = derivedMaxSquadSize();
+  if(derived > 0) return derived;
+  return Math.max(1, Number(auction.maxSquadSize)||7);
 }
 function teamSpent(team){
   return (team.squad||[]).reduce((s,p)=>s + (Number(p.price)||0), 0);
@@ -767,13 +802,56 @@ function renderPlayerSourceTable(list){
 
 /* ---------- SETUP ---------- */
 function ensureSetupTeams(n){
-  n = Math.max(2, Math.min(16, Number(n)||2));
+  n = Math.max(1, Math.min(32, Number(n)||1));
   const teams = (auction.teams||[]).slice(0, n);
   while(teams.length < n){
     teams.push({
       id: uid(), name: 'Team '+(teams.length+1), logoUrl:'', manager:'', managerPlayerId:'', mentor:'', captain:'',
       iconPlayerId:'', budget: Number(auction.defaultBudget)||1000, remainingBudget: Number(auction.defaultBudget)||1000,
       squad:[]
+    });
+  }
+  auction.teams = teams;
+}
+/** Build auction teams from registered managers: team name + manager come from registration. */
+function syncTeamsFromRegistration(){
+  const n = registrationTeamCount();
+  if(n < 1) return;
+  const mgrs = registeredManagers();
+  const existing = auction.teams || [];
+  const usedPrev = new Set();
+  const teams = [];
+  for(let i = 0; i < n; i++){
+    const m = mgrs[i] || null;
+    let prev = null;
+    if(m){
+      prev = existing.find(t => !usedPrev.has(t.id) && t.managerPlayerId === m.id)
+        || existing.find(t => !usedPrev.has(t.id) && String(t.name||'').trim().toLowerCase() === String(m.teamName||'').trim().toLowerCase());
+    }
+    if(!prev){
+      prev = existing.find(t => !usedPrev.has(t.id) && !t.managerPlayerId && !mgrs.some(x => x.id === t.managerPlayerId));
+    }
+    if(!prev) prev = existing.find(t => !usedPrev.has(t.id));
+    if(prev) usedPrev.add(prev.id);
+
+    const teamName = m
+      ? (String(m.teamName||'').trim() || ('Team '+(i+1)))
+      : ('Team '+(i+1));
+    const budget = Number(auction.defaultBudget)||1000;
+    const squad = (prev && prev.squad) || [];
+    const spent = Array.isArray(squad) ? squad.reduce((s,x)=>s+(Number(x.price)||0),0) : 0;
+    teams.push({
+      id: (prev && prev.id) || uid(),
+      name: teamName,
+      logoUrl: (prev && prev.logoUrl) || '',
+      manager: m ? String(m.name||'') : '',
+      managerPlayerId: m ? m.id : '',
+      mentor: (prev && prev.mentor) || '',
+      captain: (prev && prev.captain) || '',
+      iconPlayerId: (prev && prev.iconPlayerId) || '',
+      budget,
+      remainingBudget: Math.max(0, budget - spent),
+      squad
     });
   }
   auction.teams = teams;
@@ -790,9 +868,14 @@ function renderSetup(){
       </div></div>`;
   }
   const eligible = auctionEligiblePlayers();
-  const nTeams = (auction.teams||[]).length || Number(tournamentSettings.maxTeams)||4;
-  if(!(auction.teams||[]).length) ensureSetupTeams(nTeams);
+  const regPlayers = registrationPlayerCount();
+  const regTeams = registrationTeamCount();
+  if(auction.status==='setup') syncTeamsFromRegistration();
   const msg = ui.msg;
+  const squadSize = maxSquadSize();
+  const squadHint = (regPlayers > 0 && regTeams > 0)
+    ? `From registration: ${regPlayers} players ÷ ${regTeams} teams = <strong>${squadSize}</strong> per team (incl. icon).`
+    : 'Set player slots and number of teams in Registration → Admin → Settings.';
 
   return `
     <div class="page-title">Admin · Auction Setup</div>
@@ -809,15 +892,19 @@ function renderSetup(){
       <div class="grid-2">
         <div class="field"><label>Competition Name *</label><input id="setComp" value="${escapeHtml(auction.competitionName||tournamentSettings.name||'')}"></div>
         <div class="field"><label>Auctioneer Name</label><input id="setAuctioneer" value="${escapeHtml(auction.auctioneerName||'')}"></div>
-        <div class="field"><label>Base Price (₹)</label><input id="setBase" type="number" min="1" value="${auction.basePrice||20}"></div>
-        <div class="field"><label>Default Team Budget (₹)</label><input id="setBudget" type="number" min="1" value="${auction.defaultBudget||1000}"></div>
-        <div class="field"><label>Max Squad Size (incl. icon)</label><input id="setSquad" type="number" min="1" max="30" value="${auction.maxSquadSize||7}"></div>
-        <div class="field"><label>Number of Teams</label><input id="setTeamCount" type="number" min="2" max="16" value="${(auction.teams||[]).length}"></div>
+        <div class="field"><label>Base Price (₹)</label><input id="setBase" type="number" min="1" value="${auction.basePrice||50}"></div>
+        <div class="field"><label>Team Budget (₹)</label><input id="setBudget" type="number" min="1" value="${auction.defaultBudget||1000}"><div class="hint">Same for every team. Changing this updates all teams.</div></div>
+        <div class="field"><label>Max Players / Team</label>
+          <div class="meta-value accent" style="font-family:Teko,sans-serif;font-size:28px;margin-top:4px;">${squadSize || '—'}</div>
+          <div class="hint">${squadHint}</div>
+        </div>
+        <div class="field"><label>Number of Teams</label>
+          <div class="meta-value accent" style="font-family:Teko,sans-serif;font-size:28px;margin-top:4px;">${regTeams || '—'}</div>
+          <div class="hint">${regTeams ? 'Taken from Registration → Admin → Settings (not editable here).' : 'Set number of teams in Registration → Admin → Settings.'}</div>
+        </div>
       </div>
-      <button class="btn btn-outline" onclick="applyTeamCount()">Update Team Count</button>
-      <button class="btn btn-outline" onclick="applyBudgetToAll()">Apply Budget To All Teams</button>
     </div>
-    ${(auction.teams||[]).map((t,i)=>renderSetupTeamCard(t,i,eligible)).join('')}
+    ${(auction.teams||[]).map((t,i)=>renderSetupTeamCard(t,i,eligible,squadSize)).join('')}
     <div class="card">
       <div class="export-row">
         <button class="btn btn-primary xl" onclick="saveSetup()" ${ui.setupBusy?'disabled':''}>${ui.setupBusy?'<span class="spinner"></span> Saving…':'Save Setup'}</button>
@@ -826,37 +913,41 @@ function renderSetup(){
       <div class="hint" style="margin-top:10px;color:var(--chalk-dim);font-size:12px;">Start shuffles eligible players (minus icon players) into the live pool and opens the auction desk.</div>
     </div>`;
 }
-function renderSetupTeamCard(t, i, eligible){
+function renderSetupTeamCard(t, i, eligible, squadSize){
+  squadSize = squadSize || maxSquadSize();
   const usedIcons = new Set((auction.teams||[]).filter(x=>x.id!==t.id).map(x=>x.iconPlayerId).filter(Boolean));
   const options = eligible.filter(p=>!usedIcons.has(p.id) || p.id===t.iconPlayerId);
-  const usedManagers = new Set((auction.teams||[]).filter(x=>x.id!==t.id).map(x=>x.managerPlayerId).filter(Boolean));
-  const managerOptions = registeredManagers().filter(p=>!usedManagers.has(p.id) || p.id===t.managerPlayerId);
-  const selectedManagerId = t.managerPlayerId || (teamManagerRecord(t)||{}).id || '';
+  const mgr = teamManagerRecord(t) || (t.managerPlayerId ? playerById(t.managerPlayerId) : null);
+  const teamLabel = String(t.name||'').trim() || ('Team '+(i+1));
+  const managerLabel = mgr ? (mgr.name||'') : (t.manager || '');
   return `
     <div class="team-card" data-team="${t.id}">
       <div class="team-card-head">
         ${t.logoUrl ? `<img class="team-logo" src="${escapeHtml(t.logoUrl)}">` : `<div class="team-logo placeholder">${i+1}</div>`}
         <div style="flex:1;">
-          <div class="field" style="margin:0;"><label>Team ${i+1} Name *</label><input data-k="name" data-id="${t.id}" value="${escapeHtml(t.name||'')}"></div>
+          <div class="field" style="margin:0;">
+            <label>Team ${i+1} Name</label>
+            <div style="font-size:18px;font-weight:600;margin-top:4px;">${escapeHtml(teamLabel)}</div>
+            <div class="hint">From registration (manager’s team name).</div>
+          </div>
         </div>
       </div>
       <div class="grid-2">
-        <div class="field"><label>Manager (from registration)</label>
-          <select data-k="managerPlayerId" data-id="${t.id}">
-            <option value="">Select manager</option>
-            ${managerOptions.map(p=>`<option value="${p.id}" ${selectedManagerId===p.id?'selected':''}>${escapeHtml(p.name)}${p.teamName ? ' · '+escapeHtml(p.teamName) : ''}</option>`).join('')}
-          </select>
-          <div class="hint">${managerOptions.length ? 'Photo is taken from the manager’s registration.' : 'No managers registered yet — they will appear here after signing up.'}</div>
+        <div class="field">
+          <label>Manager (from registration)</label>
+          <div style="font-size:15px;font-weight:600;margin-top:4px;">${managerLabel ? escapeHtml(managerLabel) : '—'}</div>
+          <div class="hint">${mgr
+            ? 'Fetched from registration. Photo comes from the manager’s signup.'
+            : 'Waiting for a manager to register with a team name. They appear here automatically.'}</div>
         </div>
         <div class="field"><label>Mentor</label><input data-k="mentor" data-id="${t.id}" value="${escapeHtml(t.mentor||'')}"><div class="hint">Typed here by admin. Not collected in registration.</div></div>
         <div class="field"><label>Captain</label><input data-k="captain" data-id="${t.id}" value="${escapeHtml(t.captain||'')}"></div>
-        <div class="field"><label>Budget (₹)</label><input data-k="budget" data-id="${t.id}" type="number" min="0" value="${t.budget||0}"></div>
         <div class="field" style="grid-column:1/-1;"><label>Icon Player *</label>
           <select data-k="iconPlayerId" data-id="${t.id}">
             <option value="">Select icon player</option>
             ${options.map(p=>`<option value="${p.id}" ${t.iconPlayerId===p.id?'selected':''}>${escapeHtml(p.name)} · ${escapeHtml(positionLabel(p.position))}</option>`).join('')}
           </select>
-          <div class="hint">Counts as 1 of 7 squad spots and is highlighted on the team poster. Removed from the auction pool.</div>
+          <div class="hint">Counts as 1 of ${squadSize} squad spots and is highlighted on the team poster. Removed from the auction pool.</div>
         </div>
       </div>
       <div class="field">
@@ -866,60 +957,55 @@ function renderSetupTeamCard(t, i, eligible){
       </div>
     </div>`;
 }
+function applyGlobalBudgetToTeams(){
+  const b = Number(auction.defaultBudget)||1000;
+  (auction.teams||[]).forEach(t=>{
+    t.budget = b;
+    t.remainingBudget = Math.max(0, b - teamSpent(t));
+  });
+}
 function readSetupFromDom(){
   const comp = document.getElementById('setComp');
   if(comp) auction.competitionName = comp.value.trim();
   const a = document.getElementById('setAuctioneer');
   if(a) auction.auctioneerName = a.value.trim();
   const base = document.getElementById('setBase');
-  if(base) auction.basePrice = Math.max(1, Number(base.value)||20);
+  if(base) auction.basePrice = Math.max(1, Number(base.value)||50);
   const bud = document.getElementById('setBudget');
   if(bud) auction.defaultBudget = Math.max(1, Number(bud.value)||1000);
-  const sq = document.getElementById('setSquad');
-  if(sq) auction.maxSquadSize = Math.max(1, Number(sq.value)||7);
+  auction.maxSquadSize = maxSquadSize();
   document.querySelectorAll('[data-k][data-id]').forEach(el=>{
     const t = teamById(el.dataset.id);
     if(!t) return;
     const k = el.dataset.k;
-    if(k==='budget'){ t.budget = Math.max(0, Number(el.value)||0); t.remainingBudget = t.budget; }
-    else if(k==='managerPlayerId'){
-      t.managerPlayerId = el.value;
-      const mp = playerById(el.value);
-      t.manager = mp ? (mp.name||'') : '';
-    }
-    else t[k] = el.value;
+    if(k==='name' || k==='managerPlayerId' || k==='manager' || k==='budget') return;
+    t[k] = el.value;
   });
-}
-function applyTeamCount(){
-  readSetupFromDom();
-  const n = Number(document.getElementById('setTeamCount')?.value)||4;
-  ensureSetupTeams(n);
-  ui.msg = {type:'ok', text:'Team count updated to '+auction.teams.length+'.'};
-  render();
-}
-function applyBudgetToAll(){
-  readSetupFromDom();
-  const b = Number(auction.defaultBudget)||1000;
-  (auction.teams||[]).forEach(t=>{ t.budget=b; t.remainingBudget=b; });
-  ui.msg = {type:'ok', text:'Applied ₹'+b+' budget to all teams.'};
-  render();
+  applyGlobalBudgetToTeams();
 }
 async function saveSetup(){
   if(!unlocked) return;
   readSetupFromDom();
+  syncTeamsFromRegistration();
   ui.setupBusy = true; ui.msg=null; render();
   try{
     if(!auction.competitionName) throw new Error('Enter competition name.');
-    if(!(auction.teams||[]).length) throw new Error('Add at least 2 teams.');
-    for(const t of auction.teams){
-      if(!t.name.trim()) throw new Error('Every team needs a name.');
-      if(!t.iconPlayerId) throw new Error(t.name+' needs an icon player.');
+    const regTeams = registrationTeamCount();
+    if(regTeams < 1) throw new Error('Set number of teams in Registration → Admin → Settings first.');
+    if((auction.teams||[]).length !== regTeams) syncTeamsFromRegistration();
+    if(!(auction.teams||[]).length) throw new Error('No teams available from registration settings.');
+    for(let i = 0; i < auction.teams.length; i++){
+      const t = auction.teams[i];
+      if(!t.managerPlayerId) throw new Error('Team '+(i+1)+' needs a registered manager (with team name) first.');
+      if(!String(t.name||'').trim()) throw new Error('Team '+(i+1)+' is missing its team name from registration.');
+      if(!t.iconPlayerId) throw new Error((t.name||('Team '+(i+1)))+' needs an icon player.');
     }
     const icons = auction.teams.map(t=>t.iconPlayerId);
     if(new Set(icons).size !== icons.length) throw new Error('Icon players must be unique across teams.');
     const mgrIds = auction.teams.map(t=>t.managerPlayerId).filter(Boolean);
     if(new Set(mgrIds).size !== mgrIds.length) throw new Error('Managers must be unique across teams.');
     auction.status = 'setup';
+    auction.maxSquadSize = maxSquadSize();
     await persistAuction();
     ui.msg = {type:'ok', text:'Setup saved to Firebase.'};
   }catch(e){
@@ -959,7 +1045,7 @@ async function startAuction(){
     auction.status = 'running';
     auction.bidStarted = false;
     auction.currentTeamId = null;
-    auction.currentBid = Number(auction.basePrice)||20;
+    auction.currentBid = Number(auction.basePrice)||50;
     auction.currentPlayerId = order[0] || null;
     pushHistory({ type:'start', text:'Auction started with '+order.length+' players' });
     await persistAuction();
@@ -1076,7 +1162,7 @@ function selectBiddingTeam(id){
   auction.currentTeamId = id;
   if(!auction.bidStarted){
     auction.bidStarted = true;
-    auction.currentBid = Number(auction.basePrice)||20;
+    auction.currentBid = Number(auction.basePrice)||50;
   }
   persistAuction().catch(e=>alert(e.message));
 }
@@ -1085,7 +1171,7 @@ async function startBid(){
   if(!currentPlayer()) return alert('No current player.');
   pushUndo();
   auction.bidStarted = true;
-  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentBid = Number(auction.basePrice)||50;
   auction.currentTeamId = null;
   pushHistory({ type:'start_bid', text:(currentPlayer()?.name||'')+' opened at '+rupee(auction.currentBid) });
   await persistAuction();
@@ -1094,7 +1180,7 @@ async function bumpBid(delta){
   if(!requireControl()) return;
   if(!auction.bidStarted) await startBid();
   pushUndo();
-  const next = Math.max(Number(auction.basePrice)||20, (Number(auction.currentBid)||0) + Number(delta));
+  const next = Math.max(Number(auction.basePrice)||50, (Number(auction.currentBid)||0) + Number(delta));
   auction.currentBid = next;
   pushHistory({ type:'bid', text:'Bid → '+rupee(next)+(auction.currentTeamId?' ('+(teamById(auction.currentTeamId)?.name||'')+')':'') });
   await persistAuction();
@@ -1150,14 +1236,14 @@ async function skipPlayer(){
   auction.skipped = (auction.skipped||[]).concat([{ playerId:p.id, at:Date.now() }]);
   pushHistory({ type:'skip', text:(p.name||'')+' skipped' });
   auction.currentPlayerId = auction.pool[0] || null;
-  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentBid = Number(auction.basePrice)||50;
   auction.currentTeamId = null;
   auction.bidStarted = false;
   await persistAuction();
 }
 function advanceAfterResolve(){
   auction.currentPlayerId = (auction.pool||[])[0] || null;
-  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentBid = Number(auction.basePrice)||50;
   auction.currentTeamId = null;
   auction.bidStarted = false;
   if(!(auction.pool||[]).length){
@@ -1174,7 +1260,7 @@ async function nextPlayer(){
   // if somehow stuck, sync to pool head
   pushUndo();
   auction.currentPlayerId = (auction.pool||[])[0] || null;
-  auction.currentBid = Number(auction.basePrice)||20;
+  auction.currentBid = Number(auction.basePrice)||50;
   auction.currentTeamId = null;
   auction.bidStarted = false;
   pushHistory({ type:'next', text:'Moved to next player' });
@@ -1389,7 +1475,7 @@ function renderPosters(){
     <div id="posterRoot">${renderPosterCard(t, icon, TOURNAMENT_LOGO)}</div>`;
 }
 function renderPosterCard(t, icon, logo){
-  const squadSize = Number(auction.maxSquadSize)||7;
+  const squadSize = maxSquadSize();
   const bought = (t.squad||[]).slice(0, Math.max(0, squadSize - (icon ? 1 : 0)));
   const players = [];
   if(icon) players.push({ name:icon.name, photoUrl:icon.photoUrl, position:icon.position, price:0, tag:'ICON', icon:true });
